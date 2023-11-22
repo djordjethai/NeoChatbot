@@ -108,17 +108,11 @@ new_chat_name = st.sidebar.text_input(label="Unesite ime chat-a, ako želite da 
 if new_chat_name:
     st.session_state.threads[new_chat_name] = st.session_state.thread_id
 curr_chat = st.sidebar.selectbox(label="Izaberite chat", options=[new_chat_name] + list(saved_threads.keys()))
-if curr_chat not in st.session_state.threads:
+if curr_chat !="" and curr_chat not in st.session_state.threads:
     with open(file="threads.csv", mode="a", newline="") as f:
         writer(f).writerow([new_chat_name, st.session_state.threads[curr_chat]])
-
-
-thread = client.beta.threads.create()
-st.write("thread id: ", thread.id)
-client.beta.threads.messages.list(thread_id=st.session_state.threads[curr_chat])
-st.session_state.thread_id = st.session_state.threads[curr_chat]
-st.write("thread id: ", st.session_state.threads[curr_chat])
-
+    thread = client.beta.threads.create()
+    st.session_state.thread_id = st.session_state.threads[curr_chat]
 
 if st.sidebar.button("Start Chat"):
     if prompt := st.chat_input(placeholder="What is up?"):
