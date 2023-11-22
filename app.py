@@ -80,49 +80,69 @@ if st.sidebar.button(label="Scrape and Upload"):
     except:
         st.warning("URL nije validan ili je došlo do greške prilikom scrape-ovanja")
 
-# for users to upload their own files
 st.sidebar.divider()
+# for users to upload their own files
 uploaded_file = st.sidebar.file_uploader(label="Upload fajla u OpenAI embeding", key="file_uploader")
 if st.sidebar.button(label="Upload File"):
-    # Upload file provided by user
+    # upload file provided by user
     if uploaded_file:
         with open(file=f"{uploaded_file.name}", mode="wb") as f:
             f.write(uploaded_file.getbuffer())
         additional_file_id = upload_to_openai(filepath=f"{uploaded_file.name}")
         st.session_state.file_id_list.append(additional_file_id)
         st.sidebar.write(f"Additional File ID: {additional_file_id}")
+    else:
+        st.warning("Nema upload-ovanog fajla")
 
 # display all uploaded files IDs
 if st.session_state.file_id_list:
-    st.sidebar.write("ID-jevi fajlova:")
+    st.sidebar.write("ID-jevi upload-ovanih fajlova:")
     for file_id in st.session_state.file_id_list:
         st.sidebar.write(file_id)
-        # Associate files with the assistant
+        # povezivanje fajla sa asistentom
         assistant_file = client.beta.assistants.files.create(
             assistant_id=assistant_id, 
             file_id=file_id,)
 
 st.sidebar.divider()
-chat_ime = st.sidebar.text_input(label="Unesite ime ako započinjete novi chat", key="chat_name")
-if chat_ime:
-    st.session_state.threads[chat_ime] = st.session_state.thread_id
-curr_chat = st.sidebar.selectbox(label="Izaberite neki od postojecih chat-ova", options=[chat_ime] + list(saved_threads.keys()))
+chat_name = st.sidebar.text_input(label="Unesite ime ako započinjete novi chat", key="chatname")
+if chat_name:
+    st.session_state.threads[chat_name] = st.session_state.thread_id
+curr_chat = st.sidebar.selectbox(label="Izaberite neki od postojecih chat-ova", options=[chat_name] + list(saved_threads.keys()))
 
 
 if st.sidebar.button("Start Chat"):     # start the chat session
-    if curr_chat not in saved_threads.keys():
+    if curr_chat not in st.session_state.threads:
         with open(file="threads.csv", mode="a", newline="") as f:
-            writer(f).writerow([chat_ime, st.session_state.threads[curr_chat]])
+            writer(f).writerow([chat_name, st.session_state.threads[curr_chat]])
 
-    if st.session_state.file_id_list:
-        st.session_state.start_chat = True
-        thread = client.beta.threads.create()
-        st.write("thread id: ", thread.id)
-        client.beta.threads.messages.list(thread_id=st.session_state.threads[curr_chat])
-        st.session_state.thread_id = st.session_state.threads[curr_chat]
-        st.write("thread id: ", st.session_state.threads[curr_chat])
-    else:
-        st.sidebar.warning("Please upload at least one file to start the chat.")
+    assistant = client.beta.assistants.retrieve(assistant_id="asst_25WzWOh32CdYuTeoX38gIJXh")
+    thread = client.beta.threads.retrieve(thread_id="thread_IHVzQg3xUg4xboZc3pX3Het6")
+    message = client.beta.threads.messages.create( thread_id=thread.id, role="user", content= pitanje ) 
+    run = client.beta.threads.runs.create( thread_id=thread.id, assistant_id=assistant.id, instructions="Please answer in the serbian language. For answers consult the file provided. " ) 
+    
+    st.session_state.start_chat = True
+
+    while True: 
+        sleep(0.1)
+        run_status = client.beta.threads.runs.retrieve(
+            thread_id=thread.id, 
+            run_id=run.id)
+        # If run is completed, get messages 
+        if run_status.status == 'completed': 
+            messages = client.beta.threads.messages.list(thread_id=thread.id) 
+            # Loop through messages and print content based on role 
+            for msg in messages.data: 
+                role = msg.role 
+                content = msg.content[0].text.value 
+                st.write(f"{role.capitalize()}: {content}") 
+            break
+
+    thread = client.beta.threads.create()
+    st.write("thread id: ", thread.id)
+    client.beta.threads.messages.list(thread_id=st.session_state.threads[curr_chat])
+    st.session_state.thread_id = st.session_state.threads[curr_chat]
+    st.write("thread id: ", st.session_state.threads[curr_chat])
 
 
 if st.session_state.start_chat:
