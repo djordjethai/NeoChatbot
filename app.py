@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from pdfkit import configuration, from_string
 from csv import reader, writer
 
-version = "0.5"
+version = "v0.5"
 getenv("OPENAI_API_KEY")
 client = openai
 assistant_id = "asst_cGNrHE0NDUn8AHcOkBg2sXaq"
@@ -24,7 +24,7 @@ default_session_states = {
     "start_chat": False,
     "messages": [],
     "thread_id": None,
-    "threads": {},
+    "threads": saved_threads,
     }
 for key, value in default_session_states.items():
     if key not in st.session_state:
@@ -74,8 +74,11 @@ st.sidebar.markdown(version)
 
 website_url = st.sidebar.text_input(label="Unesite URL web-stranice za scrape-ovanje", key="website_url")
 if st.sidebar.button(label="Scrape and Upload"):
-    st.session_state.file_id_list.append(
-        upload_to_openai(filepath=text_to_pdf(text=scrape_website(url=website_url), filename="scraped_content.pdf")))
+    try:
+        st.session_state.file_id_list.append(
+            upload_to_openai(filepath=text_to_pdf(text=scrape_website(url=website_url), filename="scraped_content.pdf")))
+    except:
+        st.warning("URL nije validan ili je došlo do greške prilikom scrape-ovanja")
 
 # for users to upload their own files
 st.sidebar.divider()
@@ -107,17 +110,20 @@ curr_chat = st.sidebar.selectbox(label="Izaberite neki od postojecih chat-ova", 
 
 
 if st.sidebar.button("Start Chat"):     # start the chat session
+    if curr_chat not in saved_threads.keys():
+        with open(file="threads.csv", mode="a", newline="") as f:
+            writer(f).writerow([chat_ime, st.session_state.threads[curr_chat]])
+
     if st.session_state.file_id_list:
         st.session_state.start_chat = True
         thread = client.beta.threads.create()
-        st.session_state.thread_id = thread.id
         st.write("thread id: ", thread.id)
+        client.beta.threads.messages.list(thread_id=st.session_state.threads[curr_chat])
+        st.session_state.thread_id = st.session_state.threads[curr_chat]
+        st.write("thread id: ", st.session_state.threads[curr_chat])
     else:
         st.sidebar.warning("Please upload at least one file to start the chat.")
 
-    if curr_chat not in saved_threads.keys():
-        with open(file="threads.csv", mode="a", newline="") as f:
-            writer(f).writerow([chat_ime, thread.id])
 
 if st.session_state.start_chat:
     # Initialize the model and messages list if not already in session state
