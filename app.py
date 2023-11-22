@@ -21,7 +21,6 @@ with open(file="threads.csv", mode="r") as f:
 default_session_states = {
     "file_id_list": [],
     "openai_model": "gpt-4-1106-preview",
-    "start_chat": False,
     "messages": [],
     "thread_id": None,
     "threads": saved_threads,
@@ -45,7 +44,8 @@ def upload_to_openai(filepath):
         response = openai.files.create(file=f.read(), purpose="assistants")
     return response.id
 
-def process_message_with_citations(message):    # TESTIRATI EVENTUALLY...
+_ = """ TESTIRATI EVENTUALLY...
+def process_message_with_citations(message):
     # extract content and annotations from the message and format citations as footnotes
     message_content = message.content[0].text
     annotations = message_content.annotations if hasattr(message_content, "annotations") else []
@@ -65,9 +65,9 @@ def process_message_with_citations(message):    # TESTIRATI EVENTUALLY...
 
     # Add footnotes to the end of the message content
     return message_content.value + "\n\n" + "\n".join(citations)
+"""
 
-
-st.set_page_config(page_title="MultiTool chatbot", page_icon="🀄")
+st.set_page_config(page_title="MultiTool app", page_icon="🀄")
 
 st.sidebar.header(body="MultiTool chatbot")
 st.sidebar.markdown(version)
@@ -84,7 +84,6 @@ st.sidebar.divider()
 # for users to upload their own files
 uploaded_file = st.sidebar.file_uploader(label="Upload fajla u OpenAI embeding", key="file_uploader")
 if st.sidebar.button(label="Upload File"):
-    # upload file provided by user
     if uploaded_file:
         with open(file=f"{uploaded_file.name}", mode="wb") as f:
             f.write(uploaded_file.getbuffer())
@@ -92,11 +91,11 @@ if st.sidebar.button(label="Upload File"):
         st.session_state.file_id_list.append(additional_file_id)
         st.sidebar.write(f"Additional File ID: {additional_file_id}")
     else:
-        st.warning("Nema upload-ovanog fajla")
+        st.warning("Nema upload-ovanih fajlova")
 
 # display all uploaded files IDs
 if st.session_state.file_id_list:
-    st.sidebar.write("ID-jevi upload-ovanih fajlova:")
+    st.sidebar.write("ID-jevi svih upload-ovanih fajlova:")
     for file_id in st.session_state.file_id_list:
         st.sidebar.write(file_id)
         # povezivanje fajla sa asistentom
@@ -105,57 +104,45 @@ if st.session_state.file_id_list:
             file_id=file_id,)
 
 st.sidebar.divider()
-chat_name = st.sidebar.text_input(label="Unesite ime ako započinjete novi chat", key="chatname")
-if chat_name:
-    st.session_state.threads[chat_name] = st.session_state.thread_id
-curr_chat = st.sidebar.selectbox(label="Izaberite neki od postojecih chat-ova", options=[chat_name] + list(saved_threads.keys()))
+new_chat_name = st.sidebar.text_input(label="Unesite ime chat-a, ako želite da započnete novi", key="newchatname")
+if new_chat_name:
+    st.session_state.threads[new_chat_name] = st.session_state.thread_id
+curr_chat = st.sidebar.selectbox(label="Izaberite chat", options=[new_chat_name] + list(saved_threads.keys()))
+if curr_chat not in st.session_state.threads:
+    with open(file="threads.csv", mode="a", newline="") as f:
+        writer(f).writerow([new_chat_name, st.session_state.threads[curr_chat]])
 
 
-if st.sidebar.button("Start Chat"):     # start the chat session
-    if curr_chat not in st.session_state.threads:
-        with open(file="threads.csv", mode="a", newline="") as f:
-            writer(f).writerow([chat_name, st.session_state.threads[curr_chat]])
-
-    assistant = client.beta.assistants.retrieve(assistant_id="asst_25WzWOh32CdYuTeoX38gIJXh")
-    thread = client.beta.threads.retrieve(thread_id="thread_IHVzQg3xUg4xboZc3pX3Het6")
-    message = client.beta.threads.messages.create( thread_id=thread.id, role="user", content= pitanje ) 
-    run = client.beta.threads.runs.create( thread_id=thread.id, assistant_id=assistant.id, instructions="Please answer in the serbian language. For answers consult the file provided. " ) 
-    
-    st.session_state.start_chat = True
-
-    while True: 
-        sleep(0.1)
-        run_status = client.beta.threads.runs.retrieve(
-            thread_id=thread.id, 
-            run_id=run.id)
-        # If run is completed, get messages 
-        if run_status.status == 'completed': 
-            messages = client.beta.threads.messages.list(thread_id=thread.id) 
-            # Loop through messages and print content based on role 
-            for msg in messages.data: 
-                role = msg.role 
-                content = msg.content[0].text.value 
-                st.write(f"{role.capitalize()}: {content}") 
-            break
-
-    thread = client.beta.threads.create()
-    st.write("thread id: ", thread.id)
-    client.beta.threads.messages.list(thread_id=st.session_state.threads[curr_chat])
-    st.session_state.thread_id = st.session_state.threads[curr_chat]
-    st.write("thread id: ", st.session_state.threads[curr_chat])
+thread = client.beta.threads.create()
+st.write("thread id: ", thread.id)
+client.beta.threads.messages.list(thread_id=st.session_state.threads[curr_chat])
+st.session_state.thread_id = st.session_state.threads[curr_chat]
+st.write("thread id: ", st.session_state.threads[curr_chat])
 
 
-if st.session_state.start_chat:
-    # Initialize the model and messages list if not already in session state
-    st.session_state.messages = client.beta.threads.messages.list(thread_id=st.session_state.thread_id)
-    st.session_state.messages2 = []
-    for message in st.session_state.messages2:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
+if st.sidebar.button("Start Chat"):
     if prompt := st.chat_input(placeholder="What is up?"):
+        assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
+        thread = client.beta.threads.retrieve(thread_id=st.session_state.threads[curr_chat])
+        message = client.beta.threads.messages.create(thread_id=thread.id, role="user", content=prompt) 
+        run = client.beta.threads.runs.create( thread_id=thread.id, assistant_id=assistant.id, instructions="Please answer in the serbian language. For answers consult the file provided. " ) 
+        while True: 
+            sleep(0.1)
+            run_status = client.beta.threads.runs.retrieve(
+                thread_id=thread.id, 
+                run_id=run.id)
+            # If run is completed, get messages 
+            if run_status.status == 'completed': 
+                messages = client.beta.threads.messages.list(thread_id=thread.id) 
+                # Loop through messages and print content based on role 
+                for msg in messages.data: 
+                    role = msg.role 
+                    content = msg.content[0].text.value 
+                    st.write(f"{role.capitalize()}: {content}") 
+                break
+            
         # Add user message to the state and display it
-        st.session_state.messages2.append({"role": "user", "content": prompt})
+        st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message(name="user"):
             st.markdown(body=prompt)
 
@@ -187,8 +174,10 @@ if st.session_state.start_chat:
         assistant_messages_for_run = [
             message for message in messages if message.run_id == run.id and message.role == "assistant"]
         
+        _ = """
         for message in assistant_messages_for_run:
-            full_response = process_message_with_citations(message=message)
+            # full_response = process_message_with_citations(message=message)
             st.session_state.messages2.append({"role": "assistant", "content": full_response})
             with st.chat_message(name="assistant"):
                 st.markdown(body=full_response, unsafe_allow_html=True)
+        """
