@@ -115,7 +115,8 @@ if curr_chat !="" and curr_chat not in st.session_state.threads:
     st.session_state.thread_id = st.session_state.threads[curr_chat]
 
 if st.sidebar.button("Start Chat"):
-    if prompt := st.chat_input(placeholder="What is up?"):
+    prompt = st.chat_input(placeholder="What is up?")
+    if prompt:
         assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
         thread = client.beta.threads.retrieve(thread_id=st.session_state.threads[curr_chat])
         message = client.beta.threads.messages.create(thread_id=thread.id, role="user", content=prompt) 
@@ -134,7 +135,7 @@ if st.sidebar.button("Start Chat"):
                     content = msg.content[0].text.value 
                     st.write(f"{role.capitalize()}: {content}") 
                 break
-            
+_ = """
         # Add user message to the state and display it
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message(name="user"):
@@ -167,11 +168,11 @@ if st.sidebar.button("Start Chat"):
         # Process and display assistant messages
         assistant_messages_for_run = [
             message for message in messages if message.run_id == run.id and message.role == "assistant"]
-        
-        _ = """
-        for message in assistant_messages_for_run:
-            # full_response = process_message_with_citations(message=message)
-            st.session_state.messages2.append({"role": "assistant", "content": full_response})
-            with st.chat_message(name="assistant"):
-                st.markdown(body=full_response, unsafe_allow_html=True)
-        """
+"""        
+_ = """
+for message in assistant_messages_for_run:
+    # full_response = process_message_with_citations(message=message)
+    st.session_state.messages2.append({"role": "assistant", "content": full_response})
+    with st.chat_message(name="assistant"):
+        st.markdown(body=full_response, unsafe_allow_html=True)
+"""
