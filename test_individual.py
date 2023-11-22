@@ -34,15 +34,3 @@ while True:
             content = msg.content[0].text.value 
             print(f"{role.capitalize()}: {content}") 
         break
-    
-
-_ = """
-c.	Novi Vision model koji je u stanju da „prepozna“ tekst sa slike, čak i na srpskom jeziku. Ovo je korisno kod prikupljanja i čuvanja dokumenata u iz ne struktuiranog u struktuiranom obliku. Model prepoznaje pojmove, a kao i ostali novi modeli može da da odgovor i u JSON formatu, što potpuno olakšava prenos podataka u bilo koji drugi struktuirani oblik
-
-3.	Šta to nama omogućava
-a.	Svi naši asistenti će od sada biti konverzacioni, sa pamćenjem svih prethodnih razgovora koji će se moći pozvati po želji.
-b.	Upotrebu Hybrid searcha i SQL search za polu struktuirane i struktuirane dokumente
-c.	Upotrebu semantic searcha koji je ugrađen u nove asistente
-d.	Mogućnost upotrebe na samo indeksiranih dokumenata, već i ad hoc dokumenata pa čak i web stranica
-Ovaj ceo sistem je sada dosta robusniji i brži kao a i omogućava nam da se sada potpuno posvetimo klijentima.
-"""
