@@ -98,7 +98,7 @@ thread = client.beta.threads.retrieve(thread_id=st.session_state.thread_id)
 if prompt := st.chat_input(placeholder="Postavite pitanje"):
     message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
     run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
-                                          instructions="Answer only in the Serbian language. For answers consult the file provided.") 
+                                          instructions="Answer only in the Serbian language. For answers consult the uploaded files.") 
     while True: 
         sleep(0.1)
         run_status = client.beta.threads.runs.retrieve(thread_id=st.session_state.thread_id, run_id=run.id)
