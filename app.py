@@ -29,7 +29,6 @@ for key, value in default_session_states.items():
     if key not in st.session_state:
         st.session_state[key] = value
 
-
 def scrape_website(url):
     return BeautifulSoup(markup=requests_get(url).text, features="html.parser",).get_text()
 
@@ -44,7 +43,7 @@ def upload_to_openai(filepath):
         response = openai.files.create(file=f.read(), purpose="assistants")
     return response.id
 
-_ = """ TESTIRATI EVENTUALLY...
+_ = """
 def process_message_with_citations(message):
     # extract content and annotations from the message and format citations as footnotes
     message_content = message.content[0].text
@@ -67,33 +66,29 @@ def process_message_with_citations(message):
     return message_content.value + "\n\n" + "\n".join(citations)
 """
 
-st.set_page_config(page_title="MultiTool app", page_icon="🀄")
+st.set_page_config(page_title="MultiTool app", page_icon="🤖")
+st.write(saved_threads)
 
-st.sidebar.header(body="MultiTool chatbot")
-st.sidebar.markdown(version)
+st.sidebar.header(body="MultiTool chatbot; " + version)
 
+st.sidebar.text("")
 website_url = st.sidebar.text_input(label="Unesite URL web-stranice za scrape-ovanje", key="website_url")
 if st.sidebar.button(label="Scrape and Upload"):
     try:
         st.session_state.file_id_list.append(
             upload_to_openai(filepath=text_to_pdf(text=scrape_website(url=website_url), filename="scraped_content.pdf")))
-    except:
-        st.warning("URL nije validan ili je došlo do greške prilikom scrape-ovanja")
+    except Exception as e:
+        st.warning("Opis greške:\n\n" + str(e))
 
-st.sidebar.divider()
-# for users to upload their own files
-uploaded_file = st.sidebar.file_uploader(label="Upload fajla u OpenAI embeding", key="file_uploader")
+uploaded_file = st.sidebar.file_uploader(label="Upload fajla u OpenAI embeding", key="uploadedfile")
 if st.sidebar.button(label="Upload File"):
-    if uploaded_file:
+    try:
         with open(file=f"{uploaded_file.name}", mode="wb") as f:
             f.write(uploaded_file.getbuffer())
-        additional_file_id = upload_to_openai(filepath=f"{uploaded_file.name}")
-        st.session_state.file_id_list.append(additional_file_id)
-        st.sidebar.write(f"Additional File ID: {additional_file_id}")
-    else:
-        st.warning("Nema upload-ovanih fajlova")
+        st.session_state.file_id_list.append(upload_to_openai(filepath=f"{uploaded_file.name}"))
+    except Exception as e:
+        st.warning("Opis greške:\n\n" + str(e))
 
-# display all uploaded files IDs
 if st.session_state.file_id_list:
     st.sidebar.write("ID-jevi svih upload-ovanih fajlova:")
     for file_id in st.session_state.file_id_list:
@@ -103,7 +98,7 @@ if st.session_state.file_id_list:
             assistant_id=assistant_id, 
             file_id=file_id,)
 
-st.sidebar.divider()
+st.sidebar.text("")
 new_chat_name = st.sidebar.text_input(label="Unesite ime chat-a, ako želite da započnete novi", key="newchatname")
 if new_chat_name:
     st.session_state.threads[new_chat_name] = st.session_state.thread_id
