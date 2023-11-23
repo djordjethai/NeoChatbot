@@ -96,12 +96,12 @@ if st.session_state.file_id_list:
         st.sidebar.write(file_id)
         # povezivanje fajla sa asistentom
         client.beta.assistants.files.create(assistant_id=assistant_id, file_id=file_id)
-        
+
 st.session_state.threads = saved_threads
 
 st.sidebar.text("")
 new_chat_name = st.sidebar.text_input(label="Unesite ime za novi chat", key="newchatname")
-if new_chat_name.strip() != "" and st.sidebar.button(label="Create New Chat"):
+if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat"):
     thread = client.beta.threads.create()
     st.session_state.thread_id = thread.id
     with open(file="threads.csv", mode="a", newline="") as f:
