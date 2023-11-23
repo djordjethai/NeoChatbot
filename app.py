@@ -112,36 +112,36 @@ if prompt := st.chat_input(placeholder="Postavite pitanje"):
             break
 
 _ = """
-        # Add user message to the state and display it
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message(name="user"):
-            st.markdown(body=prompt)
+# Add user message to the state and display it
+st.session_state.messages.append({"role": "user", "content": prompt})
+with st.chat_message(name="user"):
+    st.markdown(body=prompt)
 
-        # Add the user's message to the existing thread
-        client.beta.threads.messages.create(
-            thread_id=st.session_state.thread_id,
-            role="user",
-            content=prompt,)
+# Add the user's message to the existing thread
+client.beta.threads.messages.create(
+    thread_id=st.session_state.thread_id,
+    role="user",
+    content=prompt,)
 
-        # Create a run with additional instructions
-        run = client.beta.threads.runs.create(
-            thread_id=st.session_state.thread_id,
-            assistant_id=assistant_id,
-            instructions="Please answer the queries using the knowledge provided in the files. \
-                When adding other information mark it clearly as such with a different color",)
+# Create a run with additional instructions
+run = client.beta.threads.runs.create(
+    thread_id=st.session_state.thread_id,
+    assistant_id=assistant_id,
+    instructions="Please answer the queries using the knowledge provided in the files. \
+        When adding other information mark it clearly as such with a different color",)
 
-        # Poll for the run to complete and retrieve the assistant"s messages
-        while run.status != "completed":
-            sleep(1)
-            run = client.beta.threads.runs.retrieve(
-                thread_id=st.session_state.thread_id,
-                run_id=run.id,)
+# Poll for the run to complete and retrieve the assistant"s messages
+while run.status != "completed":
+    sleep(1)
+    run = client.beta.threads.runs.retrieve(
+        thread_id=st.session_state.thread_id,
+        run_id=run.id,)
 
-        # Retrieve messages added by the assistant
-        messages = client.beta.threads.messages.list(
-            thread_id=st.session_state.thread_id,)
+# Retrieve messages added by the assistant
+messages = client.beta.threads.messages.list(
+    thread_id=st.session_state.thread_id,)
 
-        # Process and display assistant messages
-        assistant_messages_for_run = [
-            message for message in messages if message.run_id == run.id and message.role == "assistant"]
+# Process and display assistant messages
+assistant_messages_for_run = [
+    message for message in messages if message.run_id == run.id and message.role == "assistant"]
 """
