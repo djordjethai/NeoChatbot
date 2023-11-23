@@ -119,20 +119,20 @@ if st.sidebar.button("Start Chat"):
     assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
     thread = client.beta.threads.retrieve(thread_id=st.session_state.thread_id)
 
-    if prompt := st.chat_input(placeholder="What is up?"):
-        message = client.beta.threads.messages.create(thread_id=thread.id, role="user", content=prompt) 
-        run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant.id, 
-                                              instructions="Answer only in the serbian language. For answers consult the file provided.") 
-        while True: 
-            sleep(0.1)
-            run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-            if run_status.status == "completed": 
-                messages = client.beta.threads.messages.list(thread_id=thread.id) 
-                for msg in messages.data: 
-                    role = msg.role 
-                    content = msg.content[0].text.value 
-                    st.write(f"{role.capitalize()}: {content}")
-                break
+if prompt := st.chat_input(placeholder="What is up?"):
+    message = client.beta.threads.messages.create(thread_id=thread.id, role="user", content=prompt) 
+    run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant.id, 
+                                            instructions="Answer only in the serbian language. For answers consult the file provided.") 
+    while True: 
+        sleep(0.1)
+        run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+        if run_status.status == "completed": 
+            messages = client.beta.threads.messages.list(thread_id=thread.id) 
+            for msg in messages.data: 
+                role = msg.role 
+                content = msg.content[0].text.value 
+                st.write(f"{role.capitalize()}: {content}")
+            break
 
 _ = """
         # Add user message to the state and display it
