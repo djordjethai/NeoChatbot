@@ -101,7 +101,7 @@ if prompt := st.chat_input(placeholder="Postavite pitanje"):
     run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
                                             instructions="Answer only in the serbian language. For answers consult the file provided.") 
     while True: 
-        sleep(0.1)
+        sleep(0.3)
         run_status = client.beta.threads.runs.retrieve(thread_id=st.session_state.thread_id, run_id=run.id)
         if run_status.status == "completed": 
             messages = client.beta.threads.messages.list(thread_id=st.session_state.thread_id) 
