@@ -15,7 +15,7 @@ assistant_id = "asst_cGNrHE0NDUn8AHcOkBg2sXaq"
 
 with open(file="threads.csv", mode="r") as f:
     reader = reader(f)
-    next(reader)    # skip 1st row
+    next(reader)
     saved_threads = dict(reader)
 
 default_session_states = {
@@ -112,29 +112,28 @@ chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."]
 if chosen_chat.strip() not in ["", "Select..."] and st.sidebar.button(label="Select Chat"):
     thread = client.beta.threads.retrieve(thread_id=st.session_state.threads[chosen_chat])
     st.session_state.thread_id = thread.id
+    st.experimental_rerun()
 
 st.sidebar.text("")
 if st.sidebar.button("Start Chat"):
-    prompt = st.chat_input(placeholder="What is up?")
-    if prompt:
-        assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
-        thread = client.beta.threads.retrieve(thread_id=st.session_state.threads[chosen_chat])
+    assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
+    thread = client.beta.threads.retrieve(thread_id=st.session_state.thread_id)
+
+    if prompt := st.chat_input(placeholder="What is up?"):
         message = client.beta.threads.messages.create(thread_id=thread.id, role="user", content=prompt) 
-        run = client.beta.threads.runs.create( thread_id=thread.id, assistant_id=assistant.id, instructions="Please answer in the serbian language. For answers consult the file provided. " ) 
+        run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant.id, 
+                                              instructions="Answer only in the serbian language. For answers consult the file provided.") 
         while True: 
             sleep(0.1)
-            run_status = client.beta.threads.runs.retrieve(
-                thread_id=thread.id, 
-                run_id=run.id)
-            # If run is completed, get messages 
-            if run_status.status == 'completed': 
+            run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+            if run_status.status == "completed": 
                 messages = client.beta.threads.messages.list(thread_id=thread.id) 
-                # Loop through messages and print content based on role 
                 for msg in messages.data: 
                     role = msg.role 
                     content = msg.content[0].text.value 
-                    st.write(f"{role.capitalize()}: {content}") 
+                    st.write(f"{role.capitalize()}: {content}")
                 break
+
 _ = """
         # Add user message to the state and display it
         st.session_state.messages.append({"role": "user", "content": prompt})
