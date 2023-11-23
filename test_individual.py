@@ -34,3 +34,35 @@ while True:
             content = msg.content[0].text.value 
             print(f"{role.capitalize()}: {content}") 
         break
+
+
+_ = """
+def process_message_with_citations(message):
+    # extract content and annotations from the message and format citations as footnotes
+    message_content = message.content[0].text
+    annotations = message_content.annotations if hasattr(message_content, "annotations") else []
+    citations = []
+
+    for index, annotation in enumerate(annotations):
+        message_content.value = message_content.value.replace(annotation.text, f" [{index + 1}]")
+
+        if (file_citation := getattr(annotation, "file_citation", None)):
+            # Retrieve the cited file details (dummy response here since we can"t call OpenAI)
+            cited_file = {"filename": "cited_document.pdf"}  # This should be replaced with actual file retrieval
+            citations.append(f"[{index + 1}] {file_citation.quote} from {cited_file['filename']}")
+        elif (file_path := getattr(annotation, "file_path", None)):
+            # Placeholder for file download citation
+            cited_file = {"filename": "downloaded_document.pdf"}  # This should be replaced with actual file retrieval
+            citations.append(f"[{index + 1}] Click [here](#) to download {cited_file['filename']}")  # The download link should be replaced with the actual download path
+
+    # Add footnotes to the end of the message content
+    return message_content.value + "\n\n" + "\n".join(citations)
+"""
+
+_ = """
+for message in assistant_messages_for_run:
+    # full_response = process_message_with_citations(message=message)
+    st.session_state.messages2.append({"role": "assistant", "content": full_response})
+    with st.chat_message(name="assistant"):
+        st.markdown(body=full_response, unsafe_allow_html=True)
+"""
