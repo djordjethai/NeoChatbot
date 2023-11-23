@@ -85,7 +85,8 @@ if st.sidebar.button(label="Upload File"):
     try:
         with open(file=f"{uploaded_file.name}", mode="wb") as f:
             f.write(uploaded_file.getbuffer())
-        st.session_state.file_id_list.append(upload_to_openai(filepath=f"{uploaded_file.name}"))
+        st.session_state.file_id_list.append(
+            upload_to_openai(filepath=f"{uploaded_file.name}"))
     except Exception as e:
         st.warning("Opis greške:\n\n" + str(e))
 
@@ -94,26 +95,27 @@ if st.session_state.file_id_list:
     for file_id in st.session_state.file_id_list:
         st.sidebar.write(file_id)
         # povezivanje fajla sa asistentom
-        assistant_file = client.beta.assistants.files.create(
-            assistant_id=assistant_id, 
-            file_id=file_id,)
+        client.beta.assistants.files.create(assistant_id=assistant_id, file_id=file_id)
 
 st.sidebar.text("")
-new_chat_name = st.sidebar.text_input(label="Unesite ime chat-a, ako želite da započnete novi", key="newchatname")
-if new_chat_name:
-    st.session_state.threads[new_chat_name] = st.session_state.thread_id
-curr_chat = st.sidebar.selectbox(label="Izaberite chat", options=[new_chat_name] + list(saved_threads.keys()))
-if curr_chat !="" and curr_chat not in st.session_state.threads:
-    with open(file="threads.csv", mode="a", newline="") as f:
-        writer(f).writerow([new_chat_name, st.session_state.threads[curr_chat]])
+new_chat_name = st.sidebar.text_input(label="Unesite ime za novi chat", key="newchatname")
+if new_chat_name.strip() != "" and st.sidebar.button(label="Create New Chat"):
     thread = client.beta.threads.create()
-    st.session_state.thread_id = st.session_state.threads[curr_chat]
+    st.session_state.thread_id = thread.id
+    with open(file="threads.csv", mode="a", newline="") as f:
+        writer(f).writerow([new_chat_name, thread.id])
+    
+chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(saved_threads.keys()))
+if chosen_chat.strip() not in ["", "Select..."] and st.button(label="Select Chat"):
+    thread = client.beta.threads.retrieve(thread_id=st.session_state.threads[chosen_chat])
+    st.session_state.thread_id = thread.id
 
+st.sidebar.text("")
 if st.sidebar.button("Start Chat"):
     prompt = st.chat_input(placeholder="What is up?")
     if prompt:
         assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
-        thread = client.beta.threads.retrieve(thread_id=st.session_state.threads[curr_chat])
+        thread = client.beta.threads.retrieve(thread_id=st.session_state.threads[chosen_chat])
         message = client.beta.threads.messages.create(thread_id=thread.id, role="user", content=prompt) 
         run = client.beta.threads.runs.create( thread_id=thread.id, assistant_id=assistant.id, instructions="Please answer in the serbian language. For answers consult the file provided. " ) 
         while True: 
