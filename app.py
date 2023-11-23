@@ -115,13 +115,13 @@ if chosen_chat.strip() not in ["", "Select..."] and st.sidebar.button(label="Sel
     st.experimental_rerun()
 
 st.sidebar.text("")
-if st.sidebar.button("Start Chat"):
-    assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
-    thread = client.beta.threads.retrieve(thread_id=st.session_state.thread_id)
+# if st.sidebar.button("Start Chat"):
+assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
+thread = client.beta.threads.retrieve(thread_id=st.session_state.thread_id)
 
-if prompt := st.chat_input(placeholder="What is up?"):
+if prompt := st.chat_input(placeholder="Postavite pitanje"):
     message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
-    run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id,, assistant_id=assistant.id, 
+    run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
                                             instructions="Answer only in the serbian language. For answers consult the file provided.") 
     while True: 
         sleep(0.1)
