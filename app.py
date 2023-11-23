@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from pdfkit import configuration, from_string
 from csv import reader, writer
 
-version = "v0.5"
+version = "v0.8"
 getenv("OPENAI_API_KEY")
 client = openai
 assistant_id = "asst_cGNrHE0NDUn8AHcOkBg2sXaq"
@@ -92,16 +92,15 @@ if chosen_chat.strip() not in ["", "Select..."] and st.sidebar.button(label="Sel
     st.rerun()
 
 st.sidebar.text("")
-# if st.sidebar.button("Start Chat"):
 assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
 thread = client.beta.threads.retrieve(thread_id=st.session_state.thread_id)
 
 if prompt := st.chat_input(placeholder="Postavite pitanje"):
     message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
     run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
-                                            instructions="Answer only in the serbian language. For answers consult the file provided.") 
+                                          instructions="Answer only in the Serbian language. For answers consult the file provided.") 
     while True: 
-        sleep(0.3)
+        sleep(0.1)
         run_status = client.beta.threads.runs.retrieve(thread_id=st.session_state.thread_id, run_id=run.id)
         if run_status.status == "completed": 
             messages = client.beta.threads.messages.list(thread_id=st.session_state.thread_id) 
