@@ -104,9 +104,10 @@ if new_chat_name.strip() != "" and st.sidebar.button(label="Create New Chat"):
     st.session_state.thread_id = thread.id
     with open(file="threads.csv", mode="a", newline="") as f:
         writer(f).writerow([new_chat_name, thread.id])
+    st.experimental_rerun()
     
 chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(saved_threads.keys()))
-if chosen_chat.strip() not in ["", "Select..."] and st.button(label="Select Chat"):
+if chosen_chat.strip() not in ["", "Select..."] and st.sidebar.button(label="Select Chat"):
     thread = client.beta.threads.retrieve(thread_id=st.session_state.threads[chosen_chat])
     st.session_state.thread_id = thread.id
 
