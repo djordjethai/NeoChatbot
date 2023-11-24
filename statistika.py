@@ -62,6 +62,9 @@ for row in sheet.iter_rows():
         fill_color = gradient(row[1].value, min_in_theory, max_in_theory)
         fill = PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid")
         row[1].fill = fill
+        fill_color = gradient(row[1].value, min_value, max_value)
+        fill = PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid")
+        row[2].fill = fill
 
 wb.save("statistika_upitnika.xlsx")
 
