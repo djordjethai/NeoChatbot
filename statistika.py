@@ -34,9 +34,6 @@ df2 = pd.DataFrame(list(bodovanje_po_pitanju.items()), columns=["Pitanje", "Pros
 df2.sort_values(by=["Prosečno bodova"], inplace=True, ascending=False, na_position="last")
 frames = {"Institucija": df1, "Pitanje": df2}
 df = pd.concat(frames)
-x = len(df1)
-df.loc[x:, ["Pitanje", "Prosečno bodova"]] = df.loc[:-x, ["Pitanje", "Prosečno bodova"]].values
-print(df)
 df.to_excel("statistika_upitnika.xlsx", index=False)
 
 # boja
@@ -68,13 +65,6 @@ for row in sheet.iter_rows():
         fill_color = gradient(row[1].value, min_in_theory, max_in_theory)
         fill = PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid")
         row[1].fill = fill
-    if isinstance(row[5].value, int):
-        fill_color = gradient(row[5].value, 0, 10)
-        fill = PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid")
-        row[5].fill = fill
-        fill_color = gradient(round(max_value / 2), min_value, max_value)
-        fill = PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid")
-        row[5].fill = fill
 
 wb.save("statistika_upitnika.xlsx")
 
