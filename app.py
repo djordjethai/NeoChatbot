@@ -11,27 +11,9 @@ from csv import reader, writer
 version = "v0.8"
 getenv("OPENAI_API_KEY")
 client = openai
-assistant_id = "asst_cGNrHE0NDUn8AHcOkBg2sXaq"
+assistant_id = "asst_S3YpSAJl1hzVXDOlIt88j2hv"
 
 
-
-agent_prompt = """
-Before you start, please remember to always check if a tool is relevant to your query. \
-You can do this by reading the descriptions of the tools:
-    1. 'The Keyword Search tool is used to find exact matches for the terms in your query. \
-    It scans through the data and retrieves all instances where the keywords appear. \
-    This makes it particularly useful when you are looking for specific information and know the exact terms to search for.
-    However, it may not capture all relevant information if synonyms or related terms are used instead of the exact keywords. \
-    Please note that the quality and relevance of results may depend on the specificity of your query. This tool is relevant if the query is about Positive doo.'
-    2. 'The Semantic Search tool is used to understand the intent and contextual meaning of a query. \
-    By analyzing the semantics of the query, it can retrieve information that is not just keyword-based but also contextually relevant. \
-    This makes it particularly useful when dealing with complex queries or when searching for information in large, unstructured data sets. 
-    Please note that the quality and relevance of results may depend on the specificity of your query. 
-    This tool is relevant if the query is about Positive doo.'
-    3. 'The Web Search tool is used to find relevant information on the web.'
-Aways go through the above descriptions before you continue with regular chat. In case you think that the tool is relevant to your query, return it's number as the final answer. \
-So if you think that the Keyword Search tool is relevant to your query, return '1' as the final answer. Only '1' or '2' or '3' are valid answers. No additional text is allowed.
-"""
 # za tools
 from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
@@ -49,65 +31,70 @@ import pinecone
 from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
 
-if "assistant" not in st.session_state:
-    st.session_state.assistant = client.beta.assistants.create(
-        instructions="You are a knowledge retrieval AI assistant. Use your knowledge base and uploaded files to best respond to user queries.",
-        model="gpt-4-1106-preview",
-        tools=[
-            {
-            "type": "function",
-            "function": {
-            "name": "web_search",
-            "description": """This tool uses Google Search to find the most relevant and up-to-date information on the web. \
-                This tool is particularly useful when you need comprehensive information on a specific topic, \
-                    want to explore different viewpoints, or are looking for the latest news and data.
-                    Please note that the quality and relevance of results may depend on the specificity of your query. \
-                        Never use this tool when asked about Positive doo.""",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "location": {"type": "string", "description": "The city and state e.g. San Francisco, CA"},
-                    "unit": {"type": "string", "enum": ["c", "f"]}
+
+def web_serach_process():
+    return GoogleSerperAPIWrapper(environment=environ["SERPER_API_KEY"])
+
+def hybrid_search_process(upit, alpha):
+    pinecone.init(
+        api_key=environ["PINECONE_API_KEY_POS"],
+        environment=environ["PINECONE_ENVIRONMENT_POS"],
+    )
+    index = pinecone.Index("positive")
+
+    def hybrid_query():
+        def get_embedding(text, model="text-embedding-ada-002"):
+            text = text.replace("\n", " ")
+            return client.embeddings.create(input = [text], model=model).data[0].embedding
+        
+        hybrid_score_norm = (
+            lambda dense, sparse, alpha: (
+                [v * alpha for v in dense],
+                {
+                    "indices": sparse["indices"],
+                    "values": [v * (1 - alpha) for v in sparse["values"]],
                 },
-                "required": ["location"]
-            }}}, 
-            {
-            "type": "function",
-            "function": {
-            "name": "keyword_search",
-            "description": """The Keyword Search tool is used to find exact matches for the terms in your query. \
-                It scans through the data and retrieves all instances where the keywords appear. \
-                    This makes it particularly useful when you are looking for specific information and know the exact terms to search for.
-                    However, it may not capture all relevant information if synonyms or related terms are used instead of the exact keywords. \
-                        Please note that the quality and relevance of results may depend on the specificity of your query. \
-                            This tool is relevant if the query is about Positive doo.""",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                "location": {"type": "string", "description": "The city and state e.g. San Francisco, CA"},
-                },
-                "required": ["location"]
-            }}}, 
-            {
-            "type": "function",
-            "function": {
-            "name": "semantic_search",
-            "description": """The Semantic Search tool is used to understand the intent and contextual meaning of a query. \
-                By analyzing the semantics of the query, it can retrieve information that is not just keyword-based but also contextually relevant. \
-                    This makes it particularly useful when dealing with complex queries or when searching for information in large, unstructured data sets. 
-                    Please note that the quality and relevance of results may depend on the specificity of your query. 
-                    This tool is relevant if the query is about Positive doo.""",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                "location": {"type": "string", "description": "The city and state e.g. San Francisco, CA"},
-                },
-                "required": ["location"]
-            }}}
-            ])
+            )
+            if 0 <= alpha <= 1
+            else ValueError("Alpha must be between 0 and 1")
+        )
+
+        hdense, hsparse = hybrid_score_norm(
+            sparse = BM25Encoder().fit([upit]).encode_queries(upit),
+            dense=get_embedding(upit),
+            alpha=alpha,
+        )
+
+        return index.query(
+            top_k=3,
+            vector=hdense,
+            sparse_vector=hsparse,
+            include_metadata=True,
+            namespace="bis",
+            ).to_dict()
+
+    tematika = hybrid_query()
+
+    uk_teme = ""
+    for _, item in enumerate(tematika["matches"]):
+        if item["score"] > 0.05:    # session_state["score"]
+            uk_teme += item["metadata"]["context"] + "\n\n"
+
+    system_message = SystemMessagePromptTemplate.from_template(
+        template="You are a helpful assistent. You always answer in the Serbian language."
+        ).format()
+
+    human_message = HumanMessagePromptTemplate.from_template(
+        template=open_file("prompt_FT.txt")
+        ).format(
+            zahtev=upit,
+            uk_teme=uk_teme,
+            ft_model="gpt-4-1106-preview",
+            )
+    return ChatPromptTemplate(messages=[system_message, human_message])
 
 
-
+our_assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
 
 with open(file="threads.csv", mode="r") as f:
     reader = reader(f)
@@ -189,12 +176,18 @@ if chosen_chat.strip() not in ["", "Select..."] and st.sidebar.button(label="Sel
 
 st.sidebar.text("")
 assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
-thread = client.beta.threads.retrieve(thread_id=st.session_state.thread_id)
+if st.session_state.thread_id:
+    thread = client.beta.threads.retrieve(thread_id=st.session_state.thread_id)
+
+instructions = """
+Please remember to always check if a tool is relevant to your query. \
+Answer only in the Serbian language. For answers consult the uploaded files.
+"""
 
 if prompt := st.chat_input(placeholder="Postavite pitanje"):
     message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
     run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
-                                          instructions="Answer only in the Serbian language. For answers consult the uploaded files.") 
+                                          instructions=instructions) 
     while True: 
         sleep(0.1)
         run_status = client.beta.threads.runs.retrieve(thread_id=st.session_state.thread_id, run_id=run.id)
@@ -205,38 +198,3 @@ if prompt := st.chat_input(placeholder="Postavite pitanje"):
                 content = msg.content[0].text.value 
                 st.write(f"{role.capitalize()}: {content}")
             break
-
-_ = """
-# Add user message to the state and display it
-st.session_state.messages.append({"role": "user", "content": prompt})
-with st.chat_message(name="user"):
-    st.markdown(body=prompt)
-
-# Add the user's message to the existing thread
-client.beta.threads.messages.create(
-    thread_id=st.session_state.thread_id,
-    role="user",
-    content=prompt,)
-
-# Create a run with additional instructions
-run = client.beta.threads.runs.create(
-    thread_id=st.session_state.thread_id,
-    assistant_id=assistant_id,
-    instructions="Please answer the queries using the knowledge provided in the files. \
-        When adding other information mark it clearly as such with a different color",)
-
-# Poll for the run to complete and retrieve the assistant"s messages
-while run.status != "completed":
-    sleep(1)
-    run = client.beta.threads.runs.retrieve(
-        thread_id=st.session_state.thread_id,
-        run_id=run.id,)
-
-# Retrieve messages added by the assistant
-messages = client.beta.threads.messages.list(
-    thread_id=st.session_state.thread_id,)
-
-# Process and display assistant messages
-assistant_messages_for_run = [
-    message for message in messages if message.run_id == run.id and message.role == "assistant"]
-"""
