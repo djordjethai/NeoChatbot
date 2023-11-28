@@ -8,35 +8,43 @@ from bs4 import BeautifulSoup
 from pdfkit import configuration, from_string
 from csv import reader, writer
 
-# za funkcije
-from os import environ
+version = "v0.8"
+getenv("OPENAI_API_KEY")
+client = openai
+assistant_id = "asst_RjLsBT7KMHjlewGZJdThpb8H"
 
-from langchain.utilities import GoogleSerperAPIWrapper
+
+# za tools
 from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
     ChatPromptTemplate,
     )
+from langchain.utilities import GoogleSerperAPIWrapper
+from langchain.llms.openai import OpenAI
 
-from pinecone import init as pinecone_init
-from pinecone import Index as pinecone_Index
+from os import environ
+from openai import OpenAI
+
+client = OpenAI()
+import pinecone
 from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
-#
-
-client = openai.OpenAI()
-version = "v0.8"
-getenv("OPENAI_API_KEY")
-assistant_id = "asst_fe0VZKNneY8it0uUB8le8309"
 
 
-def web_serach_process():
-    return GoogleSerperAPIWrapper(environment=environ["SERPER_API_KEY"])
+def square(n):
+    return n * n
+
+
+def web_serach_process(query: str) -> str:
+    return GoogleSerperAPIWrapper(environment=environ["SERPER_API_KEY"]).run(query=query)
 
 def hybrid_search_process(upit, alpha):
-    pinecone_init(
+    pinecone.init(
         api_key=environ["PINECONE_API_KEY_POS"],
-        environment=environ["PINECONE_ENVIRONMENT_POS"])
+        environment=environ["PINECONE_ENVIRONMENT_POS"],
+    )
+    index = pinecone.Index("positive")
 
     def hybrid_query():
         def get_embedding(text, model="text-embedding-ada-002"):
@@ -61,7 +69,7 @@ def hybrid_search_process(upit, alpha):
             alpha=alpha,
         )
 
-        return pinecone_Index("positive").query(
+        return index.query(
             top_k=3,
             vector=hdense,
             sparse_vector=hsparse,
@@ -73,7 +81,7 @@ def hybrid_search_process(upit, alpha):
 
     uk_teme = ""
     for _, item in enumerate(tematika["matches"]):
-        if item["score"] > 0.05:    # score
+        if item["score"] > 0.05:    # session_state["score"]
             uk_teme += item["metadata"]["context"] + "\n\n"
 
     system_message = SystemMessagePromptTemplate.from_template(
@@ -122,8 +130,9 @@ def upload_to_openai(filepath):
         response = openai.files.create(file=f.read(), purpose="assistants")
     return response.id
 
-
 st.set_page_config(page_title="MultiTool app", page_icon="🤖")
+st.write(saved_threads)
+
 st.sidebar.header(body="MultiTool chatbot; " + version)
 
 st.sidebar.text("")
