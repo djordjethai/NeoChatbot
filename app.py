@@ -26,7 +26,6 @@ from langchain.llms.openai import OpenAI as OAI
 from os import environ
 from openai import OpenAI
 
-client = OpenAI()
 import pinecone
 from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
@@ -36,8 +35,8 @@ def web_serach_process(query: str) -> str:
     return GoogleSerperAPIWrapper(environment=environ["SERPER_API_KEY"]).run(query=query)
 
 
-client = OAI()
 def hybrid_search_process(upit: str) -> str:
+    client = OAI()
     alpha = 0.9
     pinecone.init(
         api_key=environ["PINECONE_API_KEY_POS"],
@@ -97,7 +96,7 @@ def hybrid_search_process(upit: str) -> str:
     return str(ChatPromptTemplate(messages=[system_message, human_message]))
 
 
-
+client = OpenAI()
 our_assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
 
 with open(file="threads.csv", mode="r") as f:
@@ -233,6 +232,7 @@ if prompt := st.chat_input(placeholder="Postavite pitanje"):
                 run_id=run.id,
                 tool_outputs=tool_outputs
             )
+            st.write("AAAAAAAAAAAAAAAAAAAAAA")
             break
         else:
             st.write("Waiting for the Assistant to process...")
