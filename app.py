@@ -21,7 +21,7 @@ from langchain.prompts.chat import (
     ChatPromptTemplate,
     )
 from langchain.utilities import GoogleSerperAPIWrapper
-from langchain.llms.openai import OpenAI
+from langchain.llms.openai import OpenAI as OAI
 
 from os import environ
 from openai import OpenAI
@@ -32,14 +32,13 @@ from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
 
 
-def square(n):
-    return n * n
-
-
 def web_serach_process(query: str) -> str:
     return GoogleSerperAPIWrapper(environment=environ["SERPER_API_KEY"]).run(query=query)
 
-def hybrid_search_process(upit, alpha):
+
+client = OAI()
+def hybrid_search_process(upit: str) -> str:
+    alpha = 0.9
     pinecone.init(
         api_key=environ["PINECONE_API_KEY_POS"],
         environment=environ["PINECONE_ENVIRONMENT_POS"],
@@ -74,14 +73,14 @@ def hybrid_search_process(upit, alpha):
             vector=hdense,
             sparse_vector=hsparse,
             include_metadata=True,
-            namespace="bis",
+            namespace="zapisnici",
             ).to_dict()
 
     tematika = hybrid_query()
 
     uk_teme = ""
     for _, item in enumerate(tematika["matches"]):
-        if item["score"] > 0.05:    # session_state["score"]
+        if item["score"] > 0.05:    # score
             uk_teme += item["metadata"]["context"] + "\n\n"
 
     system_message = SystemMessagePromptTemplate.from_template(
@@ -95,7 +94,8 @@ def hybrid_search_process(upit, alpha):
             uk_teme=uk_teme,
             ft_model="gpt-4-1106-preview",
             )
-    return ChatPromptTemplate(messages=[system_message, human_message])
+    return str(ChatPromptTemplate(messages=[system_message, human_message]))
+
 
 
 our_assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
@@ -193,7 +193,7 @@ if prompt := st.chat_input(placeholder="Postavite pitanje"):
     run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
                                           instructions=instructions) 
     while True: 
-        sleep(0.1)
+        sleep(4)
         run_status = client.beta.threads.runs.retrieve(thread_id=st.session_state.thread_id, run_id=run.id)
         if run_status.status == "completed": 
             messages = client.beta.threads.messages.list(thread_id=st.session_state.thread_id) 
@@ -202,3 +202,38 @@ if prompt := st.chat_input(placeholder="Postavite pitanje"):
                 content = msg.content[0].text.value 
                 st.write(f"{role.capitalize()}: {content}")
             break
+        elif run_status.status == "requires_action": 
+            st.write("Function Calling")
+            required_actions = run_status.required_action.submit_tool_outputs.model_dump()
+            print(required_actions)
+            tool_outputs = []
+            import json
+            for action in required_actions["tool_calls"]:
+                func_name = action['function']['name']
+                arguments = json.loads(action['function']['arguments'])
+                
+                if func_name == "web_search_process":
+                    output = web_serach_process(query=arguments['query'])
+                    tool_outputs.append({
+                        "tool_call_id": action['id'],
+                        "output": output
+                    })
+                elif func_name == "hybrid_search_process":
+                    output = hybrid_search_process(upit=arguments['upit'])
+                    tool_outputs.append({
+                        "tool_call_id": action['id'],
+                        "output": output
+                    })
+                else:
+                    raise ValueError(f"Unknown function: {func_name}")
+                
+            st.write("Submitting outputs back to the Assistant...")
+            client.beta.threads.runs.submit_tool_outputs(
+                thread_id=thread.id,
+                run_id=run.id,
+                tool_outputs=tool_outputs
+            )
+            break
+        else:
+            st.write("Waiting for the Assistant to process...")
+            sleep(4)

@@ -4,61 +4,57 @@ import os
 os.environ.get("OPENAI_API_KEY")
 client = openai
 
-our_assistant = client.beta.assistants.create(
-    instructions="You are a function calling AI assistant. Use your knowledge base, uploaded files and provided tools to best respond to user queries. \
-        Always answer in Serbian. You can use English to search for information on the web.",
-    model="gpt-4-1106-preview",
-    name="Positive assistant",
-    tools=[
-        {
-        "type": "function",
-        "function": {
-        "name": "square",
-        "description": "This function squares a number.",
+tools_list = [
+    {
+    "type": "function",
+    "function": {
+        "name": "get_stock_price",
+        "description": "Retrieve the latest closing price of a stock using its ticker symbol",
         "parameters": {
             "type": "object",
             "properties": {
-                "n": {"type": "integer", "description": "Number to be squared."},
+                "symbol": {
+                    "type": "string",
+                    "description": "The ticker symbol of the stock"}
             },
-            "required": ["n"]
-        }
-        }
-        },
-        {
-        "type": "function",
-        "function": {
+            "required": ["symbol"]}
+    }}, 
+    {
+    "type": "function",
+    "function": {
         "name": "web_search_process",
-        "description": """This tool uses Google Search to find the most relevant and up-to-date information on the web. \
-            This tool is particularly useful when you need comprehensive information on a specific topic, \
-                want to explore different viewpoints, or are looking for the latest news and data.
-                Please note that the quality and relevance of results may depend on the specificity of your query. \
-                    Never use this tool when asked about Positive doo.""",
+        "description": "This tool uses Google Search to find the most relevant and up-to-date information on the web.",
         "parameters": {
             "type": "object",
             "properties": {
-                "location": {"type": "string", "description": "The city and state e.g. San Francisco, CA"},
-                "unit": {"type": "string", "enum": ["c", "f"]}
+                "query": {
+                    "type": "string",
+                    "description": "The query to be searched."}
             },
-            "required": ["location"]
-        }}}, 
-        {
-        "name": "hybrid_search_process",
-        "function" : {
+            "required": ["query"]}
+    }},
+    {
+    "type": "function",
+    "function": {
         "name": "hybrid_search_process",
         "description": "This function performs a hybrid search process using Pinecone and BM25Encoder. It initializes Pinecone with the provided API key and environment, creates an index named 'positive', and performs a hybrid query using the provided query and alpha value. The function then formats the results and returns them in a specific format.",
         "parameters": {
             "type": "object",
             "properties": {
-            "upit": {
-                "type": "string",
-                "description": "The query to be searched."
+                "upit": {
+                    "type": "string",
+                    "description": "The query to be searched."},
             },
-            "alpha": {
-                "type": "number",
-                "description": "The alpha value used in the hybrid score normalization."
-            }
-            },
-            "required": ["upit", "alpha"]
-        }}}])
+            "required": ["upit"]}
+    }}
+    ]
+
+
+our_assistant = client.beta.assistants.create(
+    instructions="You are a function calling AI assistant. Use your knowledge base, uploaded files and provided tools to best respond to user queries. \
+        Always answer in Serbian. You can use English to search for information on the web.",
+    model="gpt-4-1106-preview",
+    name="Positive assistant",
+    tools=tools_list)
 
 print(our_assistant.id)
