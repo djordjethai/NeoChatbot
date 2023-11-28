@@ -22,11 +22,10 @@ our_assistant = client.beta.assistants.create(
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "location": {"type": "string", "description": "The city and state e.g. San Francisco, CA"},
-                    "unit": {"type": "string", "enum": ["c", "f"]}
+                    "query": {"type": "string", "description": "The search query"}
+                    },
+                "required": ["query"]
                 },
-                "required": ["location"]
-                }
             }
         }, {
         "type": "function",
