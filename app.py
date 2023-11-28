@@ -27,7 +27,7 @@ from myfunc.mojafunkcija import open_file
 client = openai.OpenAI()
 version = "v0.8"
 getenv("OPENAI_API_KEY")
-assistant_id = "asst_S3YpSAJl1hzVXDOlIt88j2hv"
+assistant_id = "asst_s0GXWGZcUXLQH9n1yOiPuYJ1"
 
 
 def web_serach_process(question):
