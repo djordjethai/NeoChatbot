@@ -8,30 +8,16 @@ tools_list = [
     {
     "type": "function",
     "function": {
-        "name": "get_stock_price",
-        "description": "Retrieve the latest closing price of a stock using its ticker symbol",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "symbol": {
-                    "type": "string",
-                    "description": "The ticker symbol of the stock"}
-            },
-            "required": ["symbol"]}
-    }}, 
-    {
-    "type": "function",
-    "function": {
         "name": "web_search_process",
         "description": "This tool uses Google Search to find the most relevant and up-to-date information on the web.",
         "parameters": {
             "type": "object",
             "properties": {
-                "query": {
+                "q": {
                     "type": "string",
                     "description": "The query to be searched."}
             },
-            "required": ["query"]}
+            "required": ["q"]}
     }},
     {
     "type": "function",

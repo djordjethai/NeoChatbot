@@ -31,8 +31,8 @@ from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
 
 
-def web_serach_process(query: str) -> str:
-    return GoogleSerperAPIWrapper(environment=environ["SERPER_API_KEY"]).run(query=query)
+def web_serach_process(q: str) -> str:
+    return GoogleSerperAPIWrapper(environment=environ["SERPER_API_KEY"]).run(q)
 
 
 def hybrid_search_process(upit: str) -> str:
@@ -212,13 +212,13 @@ if prompt := st.chat_input(placeholder="Postavite pitanje"):
                 arguments = json.loads(action['function']['arguments'])
                 
                 if func_name == "web_search_process":
-                    output = web_serach_process(query=arguments['query'])
+                    output = web_serach_process(arguments['query'])
                     tool_outputs.append({
                         "tool_call_id": action['id'],
                         "output": output
                     })
                 elif func_name == "hybrid_search_process":
-                    output = hybrid_search_process(upit=arguments['upit'])
+                    output = hybrid_search_process(arguments['upit'])
                     tool_outputs.append({
                         "tool_call_id": action['id'],
                         "output": output
