@@ -36,7 +36,7 @@ def web_serach_process(q: str) -> str:
 
 
 def hybrid_search_process(upit: str) -> str:
-    client = OAI()
+    # client = OAI()
     alpha = 0.9
     pinecone.init(
         api_key=environ["PINECONE_API_KEY_POS"],
@@ -187,8 +187,14 @@ Please remember to always check if a tool is relevant to your query. \
 Answer only in the Serbian language. For answers consult the uploaded files.
 """
 
+try:
+    run = client.beta.threads.runs.cancel(thread_id=st.session_state.thread_id, run_id="run_mnWjqWwfpTkWDQYHeLn9SOMG")
+except:
+    pass
+
 if prompt := st.chat_input(placeholder="Postavite pitanje"):
     message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
+
     run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
                                           instructions=instructions) 
     while True: 
@@ -212,7 +218,11 @@ if prompt := st.chat_input(placeholder="Postavite pitanje"):
                 arguments = json.loads(action['function']['arguments'])
                 
                 if func_name == "web_search_process":
-                    output = web_serach_process(arguments['query'])
+                    try:
+                        output = web_serach_process(arguments['query'])
+                    except:
+                        output = web_serach_process(arguments['q'])
+
                     tool_outputs.append({
                         "tool_call_id": action['id'],
                         "output": output
