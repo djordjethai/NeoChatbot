@@ -11,7 +11,7 @@ from csv import reader, writer
 version = "v0.8"
 getenv("OPENAI_API_KEY")
 client = openai
-assistant_id = "asst_RjLsBT7KMHjlewGZJdThpb8H"
+assistant_id = "asst_N4RTKXxTqE28KRttY34el3fE"
 
 
 # za tools
