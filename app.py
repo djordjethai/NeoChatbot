@@ -37,9 +37,7 @@ def web_serach_process(question):
 def hybrid_search_process(upit, alpha):
     pinecone_init(
         api_key=environ["PINECONE_API_KEY_POS"],
-        environment=environ["PINECONE_ENVIRONMENT_POS"],
-    )
-    index = pinecone_Index("positive")
+        environment=environ["PINECONE_ENVIRONMENT_POS"])
 
     def hybrid_query():
         def get_embedding(text, model="text-embedding-ada-002"):
@@ -64,7 +62,7 @@ def hybrid_search_process(upit, alpha):
             alpha=alpha,
         )
 
-        return index.query(
+        return pinecone_Index("positive").query(
             top_k=3,
             vector=hdense,
             sparse_vector=hsparse,
