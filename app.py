@@ -242,7 +242,6 @@ if prompt := st.chat_input(placeholder="Postavite pitanje"):
                 run_id=run.id,
                 tool_outputs=tool_outputs
             )
-            st.write("AAAAAAAAAAAAAAAAAAAAAA")
             break
         else:
             st.write("Waiting for the Assistant to process...")
