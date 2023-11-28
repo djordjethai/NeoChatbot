@@ -1,0 +1,12 @@
+Use the context provided to anwer the question. 
+
+Context:
+____________________
+
+{uk_teme}
+____________________
+
+Question: {zahtev} 
+____________________
+
+Be sure to use the writing style of {ft_model} 
