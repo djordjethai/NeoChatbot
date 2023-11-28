@@ -24,7 +24,6 @@ our_assistant = client.beta.assistants.create(
                 "properties": {
                     "query": {"type": "string", "description": "The search query"}
                     },
-                "required": ["query"]
                 },
             }
         }, {

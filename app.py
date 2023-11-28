@@ -27,12 +27,11 @@ from myfunc.mojafunkcija import open_file
 client = openai.OpenAI()
 version = "v0.8"
 getenv("OPENAI_API_KEY")
-assistant_id = "asst_s0GXWGZcUXLQH9n1yOiPuYJ1"
+assistant_id = "asst_fe0VZKNneY8it0uUB8le8309"
 
 
-def web_serach_process(question):
-    serper = GoogleSerperAPIWrapper(environment=environ["SERPER_API_KEY"])
-    return serper.search(query=question, num_results=3)
+def web_serach_process():
+    return GoogleSerperAPIWrapper(environment=environ["SERPER_API_KEY"])
 
 def hybrid_search_process(upit, alpha):
     pinecone_init(
