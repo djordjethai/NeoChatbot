@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from pdfkit import configuration, from_string
 from csv import reader, writer
 
-version = "v0.8"
+version = "v0.9"
 getenv("OPENAI_API_KEY")
 client = openai
 assistant_id = "asst_N4RTKXxTqE28KRttY34el3fE"
