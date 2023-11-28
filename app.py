@@ -30,8 +30,9 @@ getenv("OPENAI_API_KEY")
 assistant_id = "asst_S3YpSAJl1hzVXDOlIt88j2hv"
 
 
-def web_serach_process():
-    return GoogleSerperAPIWrapper(environment=environ["SERPER_API_KEY"])
+def web_serach_process(question):
+    serper = GoogleSerperAPIWrapper(environment=environ["SERPER_API_KEY"])
+    return serper.search(query=question, num_results=3)
 
 def hybrid_search_process(upit, alpha):
     pinecone_init(
