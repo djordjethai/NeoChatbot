@@ -137,30 +137,3 @@ custom_streamlit_style = """
 
     </style>
     """
-
-
-def hybrid_search_process(upit, alpha):
-    pass
-
-# @tool("Pinecone Keyword search")
-def hybrid_search_process_alpha1(upit):
-    """
-    The Keyword Search tool is used to find exact matches for the terms in your query. \
-    It scans through the data and retrieves all instances where the keywords appear. \
-    This makes it particularly useful when you are looking for specific information and know the exact terms to search for.
-    However, it may not capture all relevant information if synonyms or related terms are used instead of the exact keywords. \
-    Please note that the quality and relevance of results may depend on the specificity of your query. This tool is relevant if the query is about Positive doo.
-    """
-    return hybrid_search_process(upit, 0.1)
-
-
-# @tool("Pinecone Semantic search")
-def hybrid_search_process_alpha2(upit):
-    """
-    The Semantic Search tool is used to understand the intent and contextual meaning of a query. \
-    By analyzing the semantics of the query, it can retrieve information that is not just keyword-based but also contextually relevant. \
-    This makes it particularly useful when dealing with complex queries or when searching for information in large, unstructured data sets. 
-    Please note that the quality and relevance of results may depend on the specificity of your query. 
-    This tool is relevant if the query is about Positive doo.
-    """
-    return hybrid_search_process(upit, 0.9)
