@@ -11,7 +11,7 @@ from csv import reader, writer
 version = "v1.0"
 getenv("OPENAI_API_KEY")
 client = openai
-assistant_id = "asst_N4RTKXxTqE28KRttY34el3fE"
+assistant_id = "asst_cLf9awhvTT1zxY23K3ebpXbs"
 
 from custom_theme import custom_streamlit_style
 
