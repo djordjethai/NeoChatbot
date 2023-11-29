@@ -13,7 +13,7 @@ getenv("OPENAI_API_KEY")
 client = openai
 assistant_id = "asst_cLf9awhvTT1zxY23K3ebpXbs"
 
-from custom_theme import custom_streamlit_style
+# from custom_theme import custom_streamlit_style
 
 # za tools
 from langchain.prompts.chat import (
@@ -132,7 +132,7 @@ def upload_to_openai(filepath):
     return response.id
 
 st.set_page_config(page_title="MultiTool app", page_icon="🤖")
-st.markdown(custom_streamlit_style, unsafe_allow_html=True)
+# st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
 
 st.sidebar.header(body="MultiTool chatbot; " + version)
 
