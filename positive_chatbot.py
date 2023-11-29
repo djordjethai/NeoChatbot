@@ -36,7 +36,18 @@ def web_serach_process(q: str) -> str:
 
 
 def hybrid_search_process(upit: str) -> str:
-    alpha = 0.9
+    semantic_vs_keyword = openai.ChatCompletion.create(
+        model="gpt-4-1106-preview",
+        messages=[
+                {"role": "system", "content": "You are a helpful assistant that only answers with one of the two following messages: semantic, keyword"},
+                {"role": "user", "content": "Use your knowledge base to determine whether the following query should initiate semantic or keyword search of a Pinecone Index\n" + upit + "\n\nReturn a single word response: semantic or keyword!"}
+        ])
+    
+    if "semantic" in semantic_vs_keyword["choices"][0]["message"]["content"]:
+        alpha = 0.9
+    else:
+        alpha = 0.1
+
     pinecone.init(
         api_key=environ["PINECONE_API_KEY_POS"],
         environment=environ["PINECONE_ENVIRONMENT_POS"],
@@ -53,13 +64,11 @@ def hybrid_search_process(upit: str) -> str:
                               {"indices": sparse["indices"], 
                                "values": [v * (1 - alpha) for v in sparse["values"]]}
                                ))
-
         hdense, hsparse = hybrid_score_norm(
             sparse = BM25Encoder().fit([upit]).encode_queries(upit),
             dense=get_embedding(upit),
             alpha=alpha,
         )
-
         return index.query(
             top_k=3,
             vector=hdense,
