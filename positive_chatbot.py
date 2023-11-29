@@ -5,17 +5,21 @@ from os import getenv
 from time import sleep
 from requests import get as requests_get
 from bs4 import BeautifulSoup
+from json import loads as json_loads
 from pdfkit import configuration, from_string
 from csv import reader, writer
 
 version = "v1.0"
 getenv("OPENAI_API_KEY")
 client = openai
-assistant_id = "asst_cLf9awhvTT1zxY23K3ebpXbs"
+assistant_id = "asst_cLf9awhvTT1zxY23K3ebpXbs"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
 
-# from custom_theme import custom_streamlit_style
+# isprobati da li ovo radi kod Vas -- pogledajte liniju 131
+from custom_theme import custom_streamlit_style
 
-# za tools
+
+
+# importi za funkcije
 from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
@@ -31,22 +35,13 @@ from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
 
 
+
+# funkcije -- napomena: fiksirao sam alpha tako da ukazuje na semantic search
 def web_serach_process(q: str) -> str:
     return GoogleSerperAPIWrapper(environment=environ["SERPER_API_KEY"]).run(q)
 
-
 def hybrid_search_process(upit: str) -> str:
-    semantic_vs_keyword = openai.ChatCompletion.create(
-        model="gpt-4-1106-preview",
-        messages=[
-                {"role": "system", "content": "You are a helpful assistant that only answers with one of the two following messages: semantic, keyword"},
-                {"role": "user", "content": "Use your knowledge base to determine whether the following query should initiate semantic or keyword search of a Pinecone Index\n" + upit + "\n\nReturn a single word response: semantic or keyword!"}
-        ])
-    
-    if "semantic" in semantic_vs_keyword["choices"][0]["message"]["content"]:
-        alpha = 0.9
-    else:
-        alpha = 0.1
+    alpha = 0.9
 
     pinecone.init(
         api_key=environ["PINECONE_API_KEY_POS"],
@@ -74,7 +69,7 @@ def hybrid_search_process(upit: str) -> str:
             vector=hdense,
             sparse_vector=hsparse,
             include_metadata=True,
-            namespace="zapisnici",
+            namespace=st.session_state.namespace,
             ).to_dict()
 
     tematika = hybrid_query()
@@ -104,6 +99,9 @@ with open(file="threads.csv", mode="r") as f:
     next(reader)
     saved_threads = dict(reader)
 
+
+
+# Inicijalizacija session state-a
 default_session_states = {
     "file_id_list": [],
     "openai_model": "gpt-4-1106-preview",
@@ -111,12 +109,15 @@ default_session_states = {
     "thread_id": None,
     "threads": saved_threads,
     "cancel_run": None,
+    "namespace": None,
     }
-
 for key, value in default_session_states.items():
     if key not in st.session_state:
         st.session_state[key] = value
 
+
+
+# funkcije za scrape-ovanje i upload-ovanje dokumenata
 def scrape_website(url):
     return BeautifulSoup(markup=requests_get(url).text, features="html.parser",).get_text()
 
@@ -131,11 +132,16 @@ def upload_to_openai(filepath):
         response = openai.files.create(file=f.read(), purpose="assistants")
     return response.id
 
+
+
+# krecemo polako i sa definisanjem UI-a
 st.set_page_config(page_title="MultiTool app", page_icon="🤖")
 # st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
-
 st.sidebar.header(body="MultiTool chatbot; " + version)
 
+
+
+# Narednih 50-tak linija su za unosenje raznih vrednosti
 st.sidebar.text("")
 website_url = st.sidebar.text_input(label="Unesite URL web-stranice za scrape-ovanje", key="website_url")
 if st.sidebar.button(label="Scrape and Upload"):
@@ -164,6 +170,11 @@ if st.session_state.file_id_list:
 
 st.session_state.threads = saved_threads
 
+chosen_namespace = st.sidebar.selectbox(label="Izaberite namespace", options=["Select..."] + list(["test", "zapisnici", "koder", "positive", "miljan"]))
+if chosen_namespace.strip() not in ["", "Select..."] and st.sidebar.button(label="Select Chat"):
+    st.session_state.namespace = chosen_namespace
+    st.rerun()
+
 st.sidebar.text("")
 new_chat_name = st.sidebar.text_input(label="Unesite ime za novi chat", key="newchatname")
 if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat"):
@@ -189,13 +200,15 @@ Please remember to always check if a tool is relevant to your query. \
 Answer only in the Serbian language. For answers consult the uploaded files.
 """
 
+# ako se desi error run ce po default-u trajati 10 min pre no sto se prekine -- ovo je da ne moramo da cekamo
 try:
     run = client.beta.threads.runs.cancel(thread_id=st.session_state.thread_id, run_id=st.session_state.cancel_run)
 except:
     pass
-
 run = None
 
+
+# pitalica
 if prompt := st.chat_input(placeholder="Postavite pitanje"):
     message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
 
@@ -203,15 +216,54 @@ if prompt := st.chat_input(placeholder="Postavite pitanje"):
                                           instructions=instructions)
     
 if run is not None:
-    while True: 
-        sleep(1)
+    while True:
+        sleep(0.3)
         run_status = client.beta.threads.runs.retrieve(thread_id=st.session_state.thread_id, run_id=run.id)
         if run_status.status in ["completed", "requires_action"]:
             break
         else:
-            sleep(1)
+            sleep(0.3)
 
-def write_chat():
+
+
+# ako se poziva neka funkcija
+if run is not None and run_status.status == "requires_action":
+    st.session_state.cancel_run = run.id
+    required_actions = run_status.required_action.submit_tool_outputs.model_dump()
+    tool_outputs = []
+
+    for action in required_actions["tool_calls"]:
+        func_name = action["function"]["name"]
+        arguments = json_loads(action["function"]["arguments"])
+        
+        if func_name == "web_search_process":
+            try:        # da li je query ili q ??? Koje zezanje...
+                output = web_serach_process(arguments["query"])
+            except:
+                output = web_serach_process(arguments["q"])
+
+            tool_outputs.append({
+                "tool_call_id": action["id"],
+                "output": output
+            })
+        elif func_name == "hybrid_search_process":
+            output = hybrid_search_process(arguments["upit"])
+            tool_outputs.append({
+                "tool_call_id": action["id"],
+                "output": output
+            })
+        else:
+            raise ValueError(f"Unknown function: {func_name}")  # ovo ne bi smelo da se desi, no za svaki slucaj
+        
+    client.beta.threads.runs.submit_tool_outputs(
+        thread_id=thread.id,
+        run_id=run.id,
+        tool_outputs=tool_outputs
+    )
+    sleep(4)    # da se ne bi desilo da se prebrzo zavrsi run pa da se ne vidi output (doduse opet jelte ne radi kako treba)
+
+
+try:
     messages = client.beta.threads.messages.list(thread_id=st.session_state.thread_id) 
     for msg in reversed(messages.data): 
         role = msg.role
@@ -220,46 +272,5 @@ def write_chat():
             st.markdown(f"<div style='background-color:lightblue; padding:10px; margin:5px; border-radius:5px;'><span style='color:blue'>👤 {role.capitalize()}:</span> {content}</div>", unsafe_allow_html=True)
         else:
             st.markdown(f"<div style='background-color:lightgray; padding:10px; margin:5px; border-radius:5px;'><span style='color:red'>🤖 {role.capitalize()}:</span> {content}</div>", unsafe_allow_html=True)
-
-
-if run is not None and run_status.status == "requires_action":
-    st.session_state.cancel_run = run.id
-    st.write("Function Calling")
-    required_actions = run_status.required_action.submit_tool_outputs.model_dump()
-    print(required_actions)
-    tool_outputs = []
-    import json
-    for action in required_actions["tool_calls"]:
-        func_name = action['function']['name']
-        arguments = json.loads(action['function']['arguments'])
-        
-        if func_name == "web_search_process":
-            try:
-                output = web_serach_process(arguments['query'])
-            except:
-                output = web_serach_process(arguments['q'])
-
-            tool_outputs.append({
-                "tool_call_id": action['id'],
-                "output": output
-            })
-        elif func_name == "hybrid_search_process":
-            output = hybrid_search_process(arguments['upit'])
-            tool_outputs.append({
-                "tool_call_id": action['id'],
-                "output": output
-            })
-        else:
-            raise ValueError(f"Unknown function: {func_name}")
-        
-    client.beta.threads.runs.submit_tool_outputs(
-        thread_id=thread.id,
-        run_id=run.id,
-        tool_outputs=tool_outputs
-    )
-    sleep(4)
-
-try:
-    write_chat()
 except:
     pass
