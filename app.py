@@ -8,11 +8,12 @@ from bs4 import BeautifulSoup
 from pdfkit import configuration, from_string
 from csv import reader, writer
 
-version = "v0.9"
+version = "v1.0"
 getenv("OPENAI_API_KEY")
 client = openai
 assistant_id = "asst_N4RTKXxTqE28KRttY34el3fE"
 
+from custheme import custom_streamlit_style
 
 # za tools
 from langchain.prompts.chat import (
@@ -81,21 +82,15 @@ def hybrid_search_process(upit: str) -> str:
             uk_teme += item["metadata"]["context"] + "\n\n"
 
     system_message = SystemMessagePromptTemplate.from_template(
-        template="You are a helpful assistent. You always answer in the Serbian language."
-        ).format()
+        template="You are a helpful assistent. You always answer in the Serbian language.").format()
 
     human_message = HumanMessagePromptTemplate.from_template(
-        template=open_file("prompt_FT.txt")
-        ).format(
+        template=open_file("prompt_FT.txt")).format(
             zahtev=upit,
             uk_teme=uk_teme,
             ft_model="gpt-4-1106-preview",
             )
-    
-    x = str(ChatPromptTemplate(messages=[system_message, human_message]))
-    with open("chat_prompt.txt", "w", encoding="utf-8-sig") as f:
-        f.write(x)
-    return x
+    return str(ChatPromptTemplate(messages=[system_message, human_message]))
 
 
 client = OpenAI()
@@ -134,6 +129,8 @@ def upload_to_openai(filepath):
     return response.id
 
 st.set_page_config(page_title="MultiTool app", page_icon="🤖")
+st.markdown(custom_streamlit_style, unsafe_allow_html=True)
+
 st.sidebar.header(body="MultiTool chatbot; " + version)
 
 st.sidebar.text("")
