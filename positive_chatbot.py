@@ -13,7 +13,7 @@ getenv("OPENAI_API_KEY")
 client = openai
 assistant_id = "asst_N4RTKXxTqE28KRttY34el3fE"
 
-from custheme import custom_streamlit_style
+from custom_theme import custom_streamlit_style
 
 # za tools
 from langchain.prompts.chat import (
@@ -24,7 +24,7 @@ from langchain.prompts.chat import (
 from langchain.utilities import GoogleSerperAPIWrapper
 
 from os import environ
-from openai import OpenAI
+from openai import OpenAI   # !?
 
 import pinecone
 from pinecone_text.sparse import BM25Encoder
@@ -48,17 +48,11 @@ def hybrid_search_process(upit: str) -> str:
             text = text.replace("\n", " ")
             return client.embeddings.create(input = [text], model=model).data[0].embedding
         
-        hybrid_score_norm = (
-            lambda dense, sparse, alpha: (
-                [v * alpha for v in dense],
-                {
-                    "indices": sparse["indices"],
-                    "values": [v * (1 - alpha) for v in sparse["values"]],
-                },
-            )
-            if 0 <= alpha <= 1
-            else ValueError("Alpha must be between 0 and 1")
-        )
+        hybrid_score_norm = (lambda dense, sparse, alpha: 
+                             ([v * alpha for v in dense], 
+                              {"indices": sparse["indices"], 
+                               "values": [v * (1 - alpha) for v in sparse["values"]]}
+                               ))
 
         hdense, hsparse = hybrid_score_norm(
             sparse = BM25Encoder().fit([upit]).encode_queries(upit),
