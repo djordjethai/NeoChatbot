@@ -21,7 +21,6 @@ from langchain.prompts.chat import (
     ChatPromptTemplate,
     )
 from langchain.utilities import GoogleSerperAPIWrapper
-from langchain.llms.openai import OpenAI as OAI
 
 from os import environ
 from openai import OpenAI
@@ -36,7 +35,6 @@ def web_serach_process(q: str) -> str:
 
 
 def hybrid_search_process(upit: str) -> str:
-    # client = OAI()
     alpha = 0.9
     pinecone.init(
         api_key=environ["PINECONE_API_KEY_POS"],
@@ -93,7 +91,11 @@ def hybrid_search_process(upit: str) -> str:
             uk_teme=uk_teme,
             ft_model="gpt-4-1106-preview",
             )
-    return str(ChatPromptTemplate(messages=[system_message, human_message]))
+    
+    x = str(ChatPromptTemplate(messages=[system_message, human_message]))
+    with open("chat_prompt.txt", "w", encoding="utf-8-sig") as f:
+        f.write(x)
+    return x
 
 
 client = OpenAI()
@@ -110,7 +112,9 @@ default_session_states = {
     "messages": [],
     "thread_id": None,
     "threads": saved_threads,
+    "cancel_run": None,
     }
+
 for key, value in default_session_states.items():
     if key not in st.session_state:
         st.session_state[key] = value
@@ -130,8 +134,6 @@ def upload_to_openai(filepath):
     return response.id
 
 st.set_page_config(page_title="MultiTool app", page_icon="🤖")
-st.write(saved_threads)
-
 st.sidebar.header(body="MultiTool chatbot; " + version)
 
 st.sidebar.text("")
@@ -188,61 +190,76 @@ Answer only in the Serbian language. For answers consult the uploaded files.
 """
 
 try:
-    run = client.beta.threads.runs.cancel(thread_id=st.session_state.thread_id, run_id="run_mnWjqWwfpTkWDQYHeLn9SOMG")
+    run = client.beta.threads.runs.cancel(thread_id=st.session_state.thread_id, run_id=st.session_state.cancel_run)
 except:
     pass
+
+run = None
 
 if prompt := st.chat_input(placeholder="Postavite pitanje"):
     message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
 
     run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
-                                          instructions=instructions) 
+                                          instructions=instructions)
+    
+if run is not None:
     while True: 
-        sleep(4)
+        sleep(1)
         run_status = client.beta.threads.runs.retrieve(thread_id=st.session_state.thread_id, run_id=run.id)
-        if run_status.status == "completed": 
-            messages = client.beta.threads.messages.list(thread_id=st.session_state.thread_id) 
-            for msg in messages.data: 
-                role = msg.role 
-                content = msg.content[0].text.value 
-                st.write(f"{role.capitalize()}: {content}")
-            break
-        elif run_status.status == "requires_action": 
-            st.write("Function Calling")
-            required_actions = run_status.required_action.submit_tool_outputs.model_dump()
-            print(required_actions)
-            tool_outputs = []
-            import json
-            for action in required_actions["tool_calls"]:
-                func_name = action['function']['name']
-                arguments = json.loads(action['function']['arguments'])
-                
-                if func_name == "web_search_process":
-                    try:
-                        output = web_serach_process(arguments['query'])
-                    except:
-                        output = web_serach_process(arguments['q'])
-
-                    tool_outputs.append({
-                        "tool_call_id": action['id'],
-                        "output": output
-                    })
-                elif func_name == "hybrid_search_process":
-                    output = hybrid_search_process(arguments['upit'])
-                    tool_outputs.append({
-                        "tool_call_id": action['id'],
-                        "output": output
-                    })
-                else:
-                    raise ValueError(f"Unknown function: {func_name}")
-                
-            st.write("Submitting outputs back to the Assistant...")
-            client.beta.threads.runs.submit_tool_outputs(
-                thread_id=thread.id,
-                run_id=run.id,
-                tool_outputs=tool_outputs
-            )
+        if run_status.status in ["completed", "requires_action"]:
             break
         else:
-            st.write("Waiting for the Assistant to process...")
-            sleep(4)
+            sleep(1)
+
+def write_chat():
+    messages = client.beta.threads.messages.list(thread_id=st.session_state.thread_id) 
+    for msg in reversed(messages.data): 
+        role = msg.role
+        content = msg.content[0].text.value 
+        if role == 'user':
+            st.markdown(f"<div style='background-color:lightblue; padding:10px; margin:5px; border-radius:5px;'><span style='color:blue'>👤 {role.capitalize()}:</span> {content}</div>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<div style='background-color:lightgray; padding:10px; margin:5px; border-radius:5px;'><span style='color:red'>🤖 {role.capitalize()}:</span> {content}</div>", unsafe_allow_html=True)
+
+
+if run is not None and run_status.status == "requires_action":
+    st.session_state.cancel_run = run.id
+    st.write("Function Calling")
+    required_actions = run_status.required_action.submit_tool_outputs.model_dump()
+    print(required_actions)
+    tool_outputs = []
+    import json
+    for action in required_actions["tool_calls"]:
+        func_name = action['function']['name']
+        arguments = json.loads(action['function']['arguments'])
+        
+        if func_name == "web_search_process":
+            try:
+                output = web_serach_process(arguments['query'])
+            except:
+                output = web_serach_process(arguments['q'])
+
+            tool_outputs.append({
+                "tool_call_id": action['id'],
+                "output": output
+            })
+        elif func_name == "hybrid_search_process":
+            output = hybrid_search_process(arguments['upit'])
+            tool_outputs.append({
+                "tool_call_id": action['id'],
+                "output": output
+            })
+        else:
+            raise ValueError(f"Unknown function: {func_name}")
+        
+    client.beta.threads.runs.submit_tool_outputs(
+        thread_id=thread.id,
+        run_id=run.id,
+        tool_outputs=tool_outputs
+    )
+    sleep(4)
+
+try:
+    write_chat()
+except:
+    pass
