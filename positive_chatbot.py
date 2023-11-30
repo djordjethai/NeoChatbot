@@ -15,7 +15,7 @@ getenv("OPENAI_API_KEY")
 client = openai
 assistant_id = "asst_cLf9awhvTT1zxY23K3ebpXbs"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
 
-# isprobati da li ovo radi kod Vas -- pogledajte liniju 131
+# isprobati da li ovo radi kod Vas -- pogledajte liniju 140
 from custom_theme import custom_streamlit_style
 
 
