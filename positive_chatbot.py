@@ -6,6 +6,7 @@ from time import sleep
 from requests import get as requests_get
 from bs4 import BeautifulSoup
 from json import loads as json_loads
+from json import dumps as json_dumps
 from pdfkit import configuration, from_string
 from csv import reader, writer
 
@@ -210,10 +211,13 @@ run = None
 
 # pitalica
 if prompt := st.chat_input(placeholder="Postavite pitanje"):
-    message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
+    if st.session_state.thread_id is not None:
+        message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
 
-    run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
-                                          instructions=instructions)
+        run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
+                                            instructions=instructions)
+    else:
+        st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
     
 if run is not None:
     while True:
@@ -227,40 +231,43 @@ if run is not None:
 
 
 # ako se poziva neka funkcija
-if run is not None and run_status.status == "requires_action":
-    st.session_state.cancel_run = run.id
-    required_actions = run_status.required_action.submit_tool_outputs.model_dump()
-    tool_outputs = []
+if run is not None:
+    while True:
+        run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
 
-    for action in required_actions["tool_calls"]:
-        func_name = action["function"]["name"]
-        arguments = json_loads(action["function"]["arguments"])
-        
-        if func_name == "web_search_process":
-            try:        # da li je query ili q ??? Koje zezanje...
-                output = web_serach_process(arguments["query"])
-            except:
-                output = web_serach_process(arguments["q"])
+        if run_status.status == 'completed':
+            break
 
-            tool_outputs.append({
-                "tool_call_id": action["id"],
-                "output": output
-            })
-        elif func_name == "hybrid_search_process":
-            output = hybrid_search_process(arguments["upit"])
-            tool_outputs.append({
-                "tool_call_id": action["id"],
-                "output": output
-            })
-        else:
-            raise ValueError(f"Unknown function: {func_name}")  # ovo ne bi smelo da se desi, no za svaki slucaj
-        
-    client.beta.threads.runs.submit_tool_outputs(
-        thread_id=thread.id,
-        run_id=run.id,
-        tool_outputs=tool_outputs
-    )
-    sleep(4)    # da se ne bi desilo da se prebrzo zavrsi run pa da se ne vidi output (doduse opet jelte ne radi kako treba)
+        elif run_status.status == 'requires_action':
+            tools_outputs = []
+
+            for tool_call in run_status.required_action.submit_tool_outputs.tool_calls:
+                if tool_call.function.name == "web_search_process":
+                    arguments = json_loads(tool_call.function.arguments)
+                    try:
+                        output = web_serach_process(arguments["query"])
+                    except:
+                        output = web_serach_process(arguments["q"])
+
+                    tool_output = {"tool_call_id":tool_call.id, "output": json_dumps(output)}
+                    tools_outputs.append(tool_output)
+
+                elif tool_call.function.name == "hybrid_search_process":
+                    arguments = json_loads(tool_call.function.arguments)
+                    output = hybrid_search_process(arguments["upit"])
+                    tool_output = {"tool_call_id":tool_call.id, "output": json_dumps(output)}
+                    tools_outputs.append(tool_output)
+
+            if run_status.required_action.type == 'submit_tool_outputs':
+                client.beta.threads.runs.submit_tool_outputs(thread_id=thread.id, run_id=run.id, tool_outputs=tools_outputs)
+
+            sleep(1)
+
+
+
+
+
+
 
 
 try:
