@@ -265,11 +265,6 @@ if run is not None:
 
 
 
-
-
-
-
-
 try:
     messages = client.beta.threads.messages.list(thread_id=st.session_state.thread_id) 
     for msg in reversed(messages.data): 
