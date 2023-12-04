@@ -19,7 +19,6 @@ assistant_id = "asst_cLf9awhvTT1zxY23K3ebpXbs"  # printuje se u drugoj skripti, 
 from custom_theme import custom_streamlit_style
 
 
-
 # importi za funkcije
 from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
@@ -36,13 +35,12 @@ from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
 
 
-
 # funkcije -- napomena: fiksirao sam alpha tako da ukazuje na semantic search
 def web_serach_process(q: str) -> str:
     return GoogleSerperAPIWrapper(environment=environ["SERPER_API_KEY"]).run(q)
 
 def hybrid_search_process(upit: str) -> str:
-    alpha = 0.9
+    alpha = 0.5
 
     pinecone.init(
         api_key=environ["PINECONE_API_KEY_POS"],
@@ -66,7 +64,7 @@ def hybrid_search_process(upit: str) -> str:
             alpha=alpha,
         )
         return index.query(
-            top_k=3,
+            top_k=6,
             vector=hdense,
             sparse_vector=hsparse,
             include_metadata=True,
@@ -137,7 +135,7 @@ def upload_to_openai(filepath):
 
 # krecemo polako i sa definisanjem UI-a
 st.set_page_config(page_title="MultiTool app", page_icon="🤖")
-st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
+# st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
 st.sidebar.header(body="MultiTool chatbot; " + version)
 
 
@@ -145,7 +143,7 @@ st.sidebar.header(body="MultiTool chatbot; " + version)
 # Narednih 50-tak linija su za unosenje raznih vrednosti
 st.sidebar.text("")
 website_url = st.sidebar.text_input(label="Unesite URL web-stranice za scrape-ovanje", key="website_url")
-if st.sidebar.button(label="Scrape and Upload"):
+if st.sidebar.button(label="Scrape and Upload", key="scrape_and_upload"):
     try:
         st.session_state.file_id_list.append(
             upload_to_openai(filepath=text_to_pdf(text=scrape_website(url=website_url), filename="scraped_content.pdf")))
@@ -153,7 +151,7 @@ if st.sidebar.button(label="Scrape and Upload"):
         st.warning("Opis greške:\n\n" + str(e))
 
 uploaded_file = st.sidebar.file_uploader(label="Upload fajla u OpenAI embeding", key="uploadedfile")
-if st.sidebar.button(label="Upload File"):
+if st.sidebar.button(label="Upload File", key="uploadfile"):
     try:
         with open(file=f"{uploaded_file.name}", mode="wb") as f:
             f.write(uploaded_file.getbuffer())
@@ -172,13 +170,13 @@ if st.session_state.file_id_list:
 st.session_state.threads = saved_threads
 
 chosen_namespace = st.sidebar.selectbox(label="Izaberite namespace", options=["Select..."] + list(["test", "zapisnici", "koder", "positive", "miljan"]))
-if chosen_namespace.strip() not in ["", "Select..."] and st.sidebar.button(label="Select Chat"):
+if chosen_namespace.strip() not in ["", "Select..."] and st.sidebar.button(label="Select Namespace", key="selectchat"):
     st.session_state.namespace = chosen_namespace
     st.rerun()
 
 st.sidebar.text("")
 new_chat_name = st.sidebar.text_input(label="Unesite ime za novi chat", key="newchatname")
-if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat"):
+if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat", key="createchat"):
     thread = client.beta.threads.create()
     st.session_state.thread_id = thread.id
     with open(file="threads.csv", mode="a", newline="") as f:
@@ -186,7 +184,7 @@ if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat"):
     st.rerun()
     
 chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(saved_threads.keys()))
-if chosen_chat.strip() not in ["", "Select..."] and st.sidebar.button(label="Select Chat"):
+if chosen_chat.strip() not in ["", "Select..."] and st.sidebar.button(label="Select Chat", key="selectchat2"):
     thread = client.beta.threads.retrieve(thread_id=st.session_state.threads[chosen_chat])
     st.session_state.thread_id = thread.id
     st.rerun()
