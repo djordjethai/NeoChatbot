@@ -12,6 +12,7 @@ from myfunc.mojafunkcija import (
     positive_login,
     open_file,)
 
+st.set_page_config(page_title="Zapisnik asistent", page_icon="🤖")
 version = "v1.0"
 getenv("OPENAI_API_KEY")
 client = openai
@@ -125,7 +126,7 @@ def main():
 
 
     # krecemo polako i sa definisanjem UI-a
-    st.set_page_config(page_title="Zapisnik asistent", page_icon="🤖")
+   
     # st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
     st.sidebar.header(body="Zapisnik asistent; " + version)
 
