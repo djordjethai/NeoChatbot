@@ -12,7 +12,7 @@ tool_descriptions = {
     This function performs a hybrid search process using Pinecone and BM25Encoder. 
     It initializes Pinecone with the provided API key and environment, reads from an index named 'positive', and performs 
     a hybrid query using the provided query and alpha value. The function then formats the results and returns them in a specific format.
-    Call this function each time you are asked about the zapisnik, zapisnici, or sastanak AI Tima and you will get the best possible answer.
+    Call this function each time you are asked about the sistematizacija, pravilnik, interni dokumenti and you will get the best possible answer.
     """
 }
 
@@ -38,7 +38,7 @@ tools_list = [
 our_assistant = client.beta.assistants.create(
     instructions=system_prompt,
     model="gpt-4-1106-preview",
-    name="Zapisnik assistant",
+    name="AI Pravnik",
     tools=tools_list)
 
 print(our_assistant.id)
