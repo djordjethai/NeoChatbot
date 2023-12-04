@@ -1,0 +1,35 @@
+cookie:
+  expiry_days: 30
+  key: LLMDemoKey
+  name: Positive_Demo
+credentials:
+  usernames:
+    ? ''
+    : access_level: ''
+      email: ''
+      name: ''
+      password: $2b$12$WnAcbYBUC377xxxxxx1NluBi8TDRSt/VvGCWAPwpl62Y84yL0AFpe
+    demo:
+      access_level: Entry
+      email: demo@demo.com
+      name: Demo
+      password: $2b$12$TfPl/63rjJPo/k5b3a0fs.z.zbQWLgU41y.2dLFWe3MnsrSCNeXDS
+    djordje:
+      access_level: Low
+      email: djordje.medakovic@positive.rs
+      name: Djordje
+      password: $2b$12$mra6Eb5fHbtN.u9nswTiYepqvysfevMqTpuPVG8AK8qMGTXsKmH5C
+    miljan:
+      access_level: Extra
+      email: miljan.radanovic@positive.rs
+      name: Miljan
+      password: $2b$12$rw5H2NApJ5ev9PCJjIccGuHgRCGzm3KMhk4i2H7cszkXH5JZqi1fW
+    positive:
+      access_level: Top
+      email: positive@positive.rs
+      name: Positive
+      password: $2b$12$WxxiIXrW8lYfXcfIs2GPb.GlXqDVcCj2TdcLKR6s4dgkRdbEtuQlK
+preauthorized:
+  emails:
+  - djordje.thai@gmail.com
+
