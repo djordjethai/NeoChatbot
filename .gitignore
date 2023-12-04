@@ -12,6 +12,7 @@
 .vsidx
 .wsuo
 *.csv
+!threads.csv
 *.xlsx
 slnx.sqlite
 *.JSONL
