@@ -11,11 +11,11 @@ from myfunc.mojafunkcija import (
     positive_login,
     open_file,)
 
-st.set_page_config(page_title="Zapisnik asistent", page_icon="🤖")
+st.set_page_config(page_title="Pravnik asistent", page_icon="🤖")
 version = "v1.1"
 getenv("OPENAI_API_KEY")
 client = openai
-assistant_id = "asst_289ViiMYpvV4UGn3mRHgOAr4"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
+assistant_id = "asst_1YAl3U9XJTOnfYUJrStFO1nH"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
 client.beta.assistants.retrieve(assistant_id=assistant_id)
 
 # isprobati da li ovo radi kod Vas
