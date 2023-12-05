@@ -13,7 +13,7 @@ from myfunc.mojafunkcija import (
 
 global username
 st.set_page_config(page_title="Zapisnik asistent", page_icon="🤖")
-version = "v1.0"
+version = "v1.1"
 getenv("OPENAI_API_KEY")
 client = openai
 assistant_id = "asst_289ViiMYpvV4UGn3mRHgOAr4"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
@@ -42,6 +42,8 @@ import pinecone
 from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
 
+ovaj_asistent = "zapisnik"
+
 
 def main():
     if "username" not in st.session_state:
@@ -56,7 +58,7 @@ def main():
     sheet = client2.open_by_key(getenv("G_SHEET_ID")).sheet1
 
     saved_threads = sheet.get_all_records(head=1)
-    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads if "positive" == thread["user"]}
+    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads if username == thread["user"] and ovaj_asistent == thread["assistant"]}
 
     # Inicijalizacija session state-a
     default_session_states = {
@@ -166,7 +168,7 @@ def main():
     if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat", key="createchat"):
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
-        sheet.append_row([st.session_state.username, new_chat_name, thread.id])
+        sheet.append_row([st.session_state.username, new_chat_name, thread.id, ovaj_asistent])
         st.rerun()
     
     chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(threads_dict.keys()))
