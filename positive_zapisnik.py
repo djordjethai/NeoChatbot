@@ -5,7 +5,7 @@ from os import getenv
 from time import sleep
 from json import loads as json_loads
 from json import dumps as json_dumps
-from pdfkit import configuration, from_string
+# from pdfkit import configuration, from_string
 from csv import reader, writer
 from myfunc.mojafunkcija import (
     st_style,
@@ -15,12 +15,15 @@ from myfunc.mojafunkcija import (
 st.set_page_config(page_title="Zapisnik asistent", page_icon="🤖")
 version = "v1.0"
 getenv("OPENAI_API_KEY")
-client = openai
+# client = openai
 assistant_id = "asst_289ViiMYpvV4UGn3mRHgOAr4"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
 
 # isprobati da li ovo radi kod Vas -- pogledajte liniju 140
-from custom_theme import custom_streamlit_style
+# from custom_theme import custom_streamlit_style
 
+# importi za google drive
+from oauth2client.service_account import ServiceAccountCredentials
+import gspread
 
 # importi za funkcije
 from langchain.prompts.chat import (
@@ -28,7 +31,7 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
     ChatPromptTemplate,
     )
-from langchain.utilities import GoogleSerperAPIWrapper
+# from langchain.utilities import GoogleSerperAPIWrapper
 
 from os import environ
 from openai import OpenAI   # !?
@@ -45,8 +48,6 @@ with open(file="threads.csv", mode="r") as f:
     next(reader)
     saved_threads = dict(reader)
 
-
-
 # Inicijalizacija session state-a
 default_session_states = {
     "file_id_list": [],
@@ -62,8 +63,20 @@ for key, value in default_session_states.items():
         st.session_state[key] = value
 
 
-
 def main():
+    creds_dict = st.secrets["google_service_account"]
+    scope = ["https://spreadsheets.google.com/feeds",
+         "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+
+    client = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope))
+    sheet = client.open_by_key(getenv("G_SHEET_ID")).sheet1
+
+    values = sheet.get_all_values()
+    if values and values[0]:
+        records = sheet.get_all_records(head=2)
+    else:
+        records = []
+
     def hybrid_search_process(upit: str) -> str:
         alpha = 0.5
 
@@ -175,10 +188,8 @@ def main():
     if st.session_state.thread_id:
         thread = client.beta.threads.retrieve(thread_id=st.session_state.thread_id)
 
-    instructions = """
-    Please remember to always check each time for every new question if a tool is relevant to your query. \
-    Answer only in the Serbian language. 
-    """
+    instructions = "Please remember to always check each time for every new question if a tool is relevant to your query. \
+    Answer only in the Serbian language."
 
     # ako se desi error run ce po default-u trajati 10 min pre no sto se prekine -- ovo je da ne moramo da cekamo
     try:
