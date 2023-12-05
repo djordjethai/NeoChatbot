@@ -17,7 +17,7 @@ version = "v1.0"
 getenv("OPENAI_API_KEY")
 client = openai
 assistant_id = "asst_289ViiMYpvV4UGn3mRHgOAr4"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
-our_assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
+client.beta.assistants.retrieve(assistant_id=assistant_id)
 
 # isprobati da li ovo radi kod Vas
 # from custom_theme import custom_streamlit_style
