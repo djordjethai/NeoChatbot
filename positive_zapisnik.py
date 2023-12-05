@@ -14,7 +14,7 @@ from myfunc.mojafunkcija import (
 st.set_page_config(page_title="Zapisnik asistent", page_icon="🤖")
 version = "v1.0"
 getenv("OPENAI_API_KEY")
-# client = openai
+client = openai
 assistant_id = "asst_289ViiMYpvV4UGn3mRHgOAr4"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
 
 # isprobati da li ovo radi kod Vas -- pogledajte liniju 140
@@ -46,11 +46,12 @@ creds_dict = st.secrets["google_service_account"]
 scope = ["https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
-client = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope))
-sheet = client.open_by_key(getenv("G_SHEET_ID")).sheet1
+client2 = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope))
+sheet = client2.open_by_key(getenv("G_SHEET_ID")).sheet1
 
 values = sheet.get_all_values()
 saved_threads = sheet.get_all_records(head=1)
+threads_dict = {thread["chat name"]: thread["ID"] for thread in saved_threads}
 
 # Inicijalizacija session state-a
 default_session_states = {
@@ -68,19 +69,6 @@ for key, value in default_session_states.items():
 
 
 def main():
-    creds_dict = st.secrets["google_service_account"]
-    scope = ["https://spreadsheets.google.com/feeds",
-         "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-
-    client = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope))
-    sheet = client.open_by_key(getenv("G_SHEET_ID")).sheet1
-
-    values = sheet.get_all_values()
-    if values and values[0]:
-        records = sheet.get_all_records(head=2)
-    else:
-        records = []
-
     def hybrid_search_process(upit: str) -> str:
         alpha = 0.5
 
@@ -180,9 +168,9 @@ def main():
         sheet.append_row([new_chat_name, thread.id])
         st.rerun()
     
-    chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(saved_threads.keys()))
+    chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + [thread["chat name"] for thread in saved_threads])
     if chosen_chat.strip() not in ["", "Select..."] and st.sidebar.button(label="Select Chat", key="selectchat2"):
-        thread = client.beta.threads.retrieve(thread_id=st.session_state.threads[chosen_chat])
+        thread = client.beta.threads.retrieve(thread_id=threads_dict.get(chosen_chat))
         st.session_state.thread_id = thread.id
         st.rerun()
 
