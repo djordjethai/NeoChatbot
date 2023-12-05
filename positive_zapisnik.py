@@ -167,7 +167,7 @@ def main():
     if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat", key="createchat"):
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
-        sheet.append_row([username, new_chat_name, thread.id, ovaj_asistent])
+        sheet.append_row([st.session_state.username, new_chat_name, thread.id, ovaj_asistent])
         st.rerun()
     
     chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(threads_dict.keys()))
