@@ -47,7 +47,7 @@ def main():
     if "username" not in st.session_state:
         st.session_state["username"] = username
     client = OpenAI()
-    st.write(22)
+
     creds_dict = st.secrets["google_service_account"]
     scope = ["https://spreadsheets.google.com/feeds",
             "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
@@ -259,7 +259,6 @@ deployment_environment = os.environ.get("DEPLOYMENT_ENVIRONMENT")
 
 if deployment_environment == "Streamlit":
     name, authentication_status, username = positive_login(main, " ")
-    # st.session_state['username'] = username
 else:
     if __name__ == "__main__":
         main()
