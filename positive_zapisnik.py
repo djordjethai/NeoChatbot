@@ -32,6 +32,7 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
     ChatPromptTemplate,
     )
+# ne treba nam vise web search funkcija
 # from langchain.utilities import GoogleSerperAPIWrapper
 
 from os import environ
