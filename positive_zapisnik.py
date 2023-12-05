@@ -57,7 +57,7 @@ def main():
 
     saved_threads = sheet.get_all_records(head=1)
     threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads if "positive" == thread["user"]}
-    st.write(threads_dict)
+
     # Inicijalizacija session state-a
     default_session_states = {
         "file_id_list": [],
