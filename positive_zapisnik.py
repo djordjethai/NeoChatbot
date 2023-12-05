@@ -169,7 +169,7 @@ def main():
         sheet.append_row([st.session_state.username, new_chat_name, thread.id])
         st.rerun()
     
-    chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(threads_dict.keys())]
+    chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(threads_dict.keys()))
     if chosen_chat.strip() not in ["", "Select..."] and st.sidebar.button(label="Select Chat", key="selectchat2"):
         thread = client.beta.threads.retrieve(thread_id=threads_dict.get(chosen_chat))
         st.session_state.thread_id = thread.id
