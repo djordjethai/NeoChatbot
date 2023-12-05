@@ -56,8 +56,8 @@ def main():
     sheet = client2.open_by_key(getenv("G_SHEET_ID")).sheet1
 
     saved_threads = sheet.get_all_records(head=1)
-    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads if 'aaa' in thread["user"]}
-
+    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads if "positive" in thread["user"]}
+    st.write(threads_dict)
     # Inicijalizacija session state-a
     default_session_states = {
         "file_id_list": [],
