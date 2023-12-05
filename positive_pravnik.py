@@ -201,18 +201,6 @@ def main():
                                                 instructions=instructions)
         else:
             st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
-    
-    _ = """
-    if run is not None:
-        while True:
-            st.write(1111)
-            sleep(0.3)
-            run_status = client.beta.threads.runs.retrieve(thread_id=st.session_state.thread_id, run_id=run.id)
-            if run_status.status in ["completed", "requires_action"]:
-                break
-            else:
-                sleep(0.3)
-    """
 
 
     # ako se poziva neka funkcija
