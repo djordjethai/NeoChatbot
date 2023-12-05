@@ -47,7 +47,7 @@ def main():
     if "username" not in st.session_state:
         st.session_state["username"] = username
     client = OpenAI()
-
+    st.write(22)
     creds_dict = st.secrets["google_service_account"]
     scope = ["https://spreadsheets.google.com/feeds",
             "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
