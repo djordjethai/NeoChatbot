@@ -40,39 +40,40 @@ import pinecone
 from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
 
-if "username" not in st.session_state:
-    st.session_state["username"] = None
-
-client = OpenAI()
-our_assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
-
-creds_dict = st.secrets["google_service_account"]
-scope = ["https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-
-client2 = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope))
-sheet = client2.open_by_key(getenv("G_SHEET_ID")).sheet1
-
-values = sheet.get_all_values()
-saved_threads = sheet.get_all_records(head=1)
-threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads}
-
-# Inicijalizacija session state-a
-default_session_states = {
-    "file_id_list": [],
-    "openai_model": "gpt-4-1106-preview",
-    "messages": [],
-    "thread_id": None,
-    "threads": saved_threads,
-    "cancel_run": None,
-    "namespace": "zapisnici",
-    }
-for key, value in default_session_states.items():
-    if key not in st.session_state:
-        st.session_state[key] = value
-
 
 def main():
+    if "username" not in st.session_state:
+        st.session_state["username"] = None
+
+    client = OpenAI()
+    our_assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
+
+    creds_dict = st.secrets["google_service_account"]
+    scope = ["https://spreadsheets.google.com/feeds",
+            "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+
+    client2 = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope))
+    sheet = client2.open_by_key(getenv("G_SHEET_ID")).sheet1
+
+    values = sheet.get_all_values()
+    saved_threads = sheet.get_all_records(head=1)
+    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads}
+
+    # Inicijalizacija session state-a
+    default_session_states = {
+        "file_id_list": [],
+        "openai_model": "gpt-4-1106-preview",
+        "messages": [],
+        "thread_id": None,
+        "threads": saved_threads,
+        "cancel_run": None,
+        "namespace": "zapisnici",
+        }
+    for key, value in default_session_states.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
+
+
     def hybrid_search_process(upit: str) -> str:
         alpha = 0.5
 
