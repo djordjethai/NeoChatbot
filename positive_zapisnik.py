@@ -57,7 +57,7 @@ def main():
     sheet = client2.open_by_key(getenv("G_SHEET_ID")).sheet1
 
     saved_threads = sheet.get_all_records(head=1)
-    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads if username == thread["user"] and ovaj_asistent == thread["assistant"]}
+    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads if st.session_state.username == thread["user"] and ovaj_asistent == thread["assistant"]}
 
     # Inicijalizacija session state-a
     default_session_states = {
