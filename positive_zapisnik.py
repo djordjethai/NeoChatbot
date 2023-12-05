@@ -46,7 +46,6 @@ from myfunc.mojafunkcija import open_file
 def main():
     if "username" not in st.session_state:
         st.session_state["username"] = username
-    st.write(st.session_state["username"])
     client = OpenAI()
 
     creds_dict = st.secrets["google_service_account"]
@@ -56,9 +55,8 @@ def main():
     client2 = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope))
     sheet = client2.open_by_key(getenv("G_SHEET_ID")).sheet1
 
-    values = sheet.get_all_values()
     saved_threads = sheet.get_all_records(head=1)
-    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads}
+    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads if 'aaa' in thread["user"]}
 
     # Inicijalizacija session state-a
     default_session_states = {
@@ -66,7 +64,6 @@ def main():
         "openai_model": "gpt-4-1106-preview",
         "messages": [],
         "thread_id": None,
-        "threads": saved_threads,
         "cancel_run": None,
         "namespace": "zapisnici",
         }
@@ -164,14 +161,12 @@ def main():
             # povezivanje fajla sa asistentom
             client.beta.assistants.files.create(assistant_id=assistant_id, file_id=file_id)
 
-    st.session_state.threads = saved_threads
-
     st.sidebar.text("")
     new_chat_name = st.sidebar.text_input(label="Unesite ime za novi chat", key="newchatname")
     if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat", key="createchat"):
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
-        sheet.append_row([new_chat_name, thread.id])
+        sheet.append_row([st.session_state.username, new_chat_name, thread.id])
         st.rerun()
     
     chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + [thread["chat"] for thread in saved_threads])
