@@ -45,6 +45,8 @@ ovaj_asistent = "zapisnik"
 
 global username
 def main():
+    if "username" not in st.session_state:
+        st.session_state.username = username
     client = OpenAI()
 
     creds_dict = st.secrets["google_service_account"]
