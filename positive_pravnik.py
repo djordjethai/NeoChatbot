@@ -66,7 +66,7 @@ def main():
         "messages": [],
         "thread_id": None,
         "cancel_run": None,
-        "namespace": "zapisnici",
+        "namespace": "pravnik",
         }
     for key, value in default_session_states.items():
         if key not in st.session_state:
@@ -137,7 +137,7 @@ def main():
     # krecemo polako i sa definisanjem UI-a
    
     # st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
-    st.sidebar.header(body="Zapisnik asistent; " + version)
+    st.sidebar.header(body="Pravnik asistent; " + version)
 
 
 
