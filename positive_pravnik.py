@@ -202,6 +202,7 @@ def main():
         else:
             st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
     
+    _ = """
     if run is not None:
         while True:
             st.write(1111)
@@ -211,7 +212,7 @@ def main():
                 break
             else:
                 sleep(0.3)
-
+    """
 
 
     # ako se poziva neka funkcija
