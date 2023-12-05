@@ -43,7 +43,7 @@ from myfunc.mojafunkcija import open_file
 
 ovaj_asistent = "zapisnik"
 
-
+global username
 def main():
     client = OpenAI()
 
