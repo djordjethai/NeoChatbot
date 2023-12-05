@@ -11,6 +11,7 @@ from myfunc.mojafunkcija import (
     positive_login,
     open_file,)
 
+global username
 st.set_page_config(page_title="Zapisnik asistent", page_icon="🤖")
 version = "v1.0"
 getenv("OPENAI_API_KEY")
@@ -39,6 +40,9 @@ import pinecone
 from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
 
+if "username" not in st.session_state:
+    st.session_state["username"] = None
+
 client = OpenAI()
 our_assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
 
@@ -51,7 +55,7 @@ sheet = client2.open_by_key(getenv("G_SHEET_ID")).sheet1
 
 values = sheet.get_all_values()
 saved_threads = sheet.get_all_records(head=1)
-threads_dict = {thread["chat name"]: thread["ID"] for thread in saved_threads}
+threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads}
 
 # Inicijalizacija session state-a
 default_session_states = {
@@ -168,7 +172,7 @@ def main():
         sheet.append_row([new_chat_name, thread.id])
         st.rerun()
     
-    chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + [thread["chat name"] for thread in saved_threads])
+    chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + [thread["chat"] for thread in saved_threads])
     if chosen_chat.strip() not in ["", "Select..."] and st.sidebar.button(label="Select Chat", key="selectchat2"):
         thread = client.beta.threads.retrieve(thread_id=threads_dict.get(chosen_chat))
         st.session_state.thread_id = thread.id
@@ -258,6 +262,7 @@ deployment_environment = os.environ.get("DEPLOYMENT_ENVIRONMENT")
 
 if deployment_environment == "Streamlit":
     name, authentication_status, username = positive_login(main, " ")
+    # st.session_state['username'] = username
 else:
     if __name__ == "__main__":
         main()
