@@ -195,7 +195,7 @@ def main():
     # pitalica
     if prompt := st.chat_input(placeholder="Postavite pitanje"):
         if st.session_state.thread_id is not None:
-            message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
+            client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
 
             run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
                                                 instructions=instructions)
@@ -216,6 +216,7 @@ def main():
     # ako se poziva neka funkcija
     if run is not None:
         while True:
+            sleep(0.3)
             run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
 
             if run_status.status == 'completed':
@@ -239,7 +240,7 @@ def main():
                 if run_status.required_action.type == 'submit_tool_outputs':
                     client.beta.threads.runs.submit_tool_outputs(thread_id=thread.id, run_id=run.id, tool_outputs=tools_outputs)
 
-                sleep(1)
+                sleep(0.3)
 
 
 
