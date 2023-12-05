@@ -56,7 +56,7 @@ def main():
     sheet = client2.open_by_key(getenv("G_SHEET_ID")).sheet1
 
     saved_threads = sheet.get_all_records(head=1)
-    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads if "positive" in thread["user"]}
+    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads if "positive" == thread["user"]}
     st.write(threads_dict)
     # Inicijalizacija session state-a
     default_session_states = {
@@ -169,7 +169,7 @@ def main():
         sheet.append_row([st.session_state.username, new_chat_name, thread.id])
         st.rerun()
     
-    chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + [thread["chat"] for thread in saved_threads])
+    chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(threads_dict.keys())]
     if chosen_chat.strip() not in ["", "Select..."] and st.sidebar.button(label="Select Chat", key="selectchat2"):
         thread = client.beta.threads.retrieve(thread_id=threads_dict.get(chosen_chat))
         st.session_state.thread_id = thread.id
