@@ -5,22 +5,25 @@ from os import getenv
 from time import sleep
 from json import loads as json_loads
 from json import dumps as json_dumps
-from pdfkit import configuration, from_string
-from csv import reader, writer
+# from pdfkit import configuration, from_string
 from myfunc.mojafunkcija import (
     st_style,
     positive_login,
     open_file,)
 
-st.set_page_config(page_title="AI Pravnik", page_icon="🤖")
-version = "v1.0"
+st.set_page_config(page_title="Zapisnik asistent", page_icon="🤖")
+version = "v1.1"
 getenv("OPENAI_API_KEY")
 client = openai
-assistant_id = "asst_1YAl3U9XJTOnfYUJrStFO1nH"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
+assistant_id = "asst_289ViiMYpvV4UGn3mRHgOAr4"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
+client.beta.assistants.retrieve(assistant_id=assistant_id)
 
-# isprobati da li ovo radi kod Vas -- pogledajte liniju 140
-from custom_theme import custom_streamlit_style
+# isprobati da li ovo radi kod Vas
+# from custom_theme import custom_streamlit_style
 
+# importi za google drive
+from oauth2client.service_account import ServiceAccountCredentials
+import gspread
 
 # importi za funkcije
 from langchain.prompts.chat import (
@@ -28,7 +31,8 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
     ChatPromptTemplate,
     )
-from langchain.utilities import GoogleSerperAPIWrapper
+# ne treba nam vise web search funkcija
+# from langchain.utilities import GoogleSerperAPIWrapper
 
 from os import environ
 from openai import OpenAI   # !?
@@ -37,33 +41,38 @@ import pinecone
 from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
 
-client = OpenAI()
-our_assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
+ovaj_asistent = "pravnik"
 
-with open(file="threads.csv", mode="r") as f:
-    reader = reader(f)
-    next(reader)
-    saved_threads = dict(reader)
-
-
-
-# Inicijalizacija session state-a
-default_session_states = {
-    "file_id_list": [],
-    "openai_model": "gpt-4-1106-preview",
-    "messages": [],
-    "thread_id": None,
-    "threads": saved_threads,
-    "cancel_run": None,
-    "namespace": "pravnik",
-    }
-for key, value in default_session_states.items():
-    if key not in st.session_state:
-        st.session_state[key] = value
-
-
-
+global username
 def main():
+    if "username" not in st.session_state:
+        st.session_state.username = username
+    client = OpenAI()
+
+    creds_dict = st.secrets["google_service_account"]
+    scope = ["https://spreadsheets.google.com/feeds",
+            "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+
+    client2 = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope))
+    sheet = client2.open_by_key(getenv("G_SHEET_ID")).sheet1
+
+    saved_threads = sheet.get_all_records(head=1)
+    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads if st.session_state.username == thread["user"] and ovaj_asistent == thread["assistant"]}
+
+    # Inicijalizacija session state-a
+    default_session_states = {
+        "file_id_list": [],
+        "openai_model": "gpt-4-1106-preview",
+        "messages": [],
+        "thread_id": None,
+        "cancel_run": None,
+        "namespace": "zapisnici",
+        }
+    for key, value in default_session_states.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
+
+
     def hybrid_search_process(upit: str) -> str:
         alpha = 0.5
 
@@ -128,7 +137,7 @@ def main():
     # krecemo polako i sa definisanjem UI-a
    
     # st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
-    st.sidebar.header(body="AI Pravnik; " + version)
+    st.sidebar.header(body="Zapisnik asistent; " + version)
 
 
 
@@ -153,20 +162,17 @@ def main():
             # povezivanje fajla sa asistentom
             client.beta.assistants.files.create(assistant_id=assistant_id, file_id=file_id)
 
-    st.session_state.threads = saved_threads
-
     st.sidebar.text("")
     new_chat_name = st.sidebar.text_input(label="Unesite ime za novi chat", key="newchatname")
     if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat", key="createchat"):
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
-        with open(file="threads.csv", mode="a", newline="") as f:
-            writer(f).writerow([new_chat_name, thread.id])
+        sheet.append_row([st.session_state.username, new_chat_name, thread.id, ovaj_asistent])
         st.rerun()
     
-    chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(saved_threads.keys()))
+    chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(threads_dict.keys()))
     if chosen_chat.strip() not in ["", "Select..."] and st.sidebar.button(label="Select Chat", key="selectchat2"):
-        thread = client.beta.threads.retrieve(thread_id=st.session_state.threads[chosen_chat])
+        thread = client.beta.threads.retrieve(thread_id=threads_dict.get(chosen_chat))
         st.session_state.thread_id = thread.id
         st.rerun()
 
@@ -175,10 +181,8 @@ def main():
     if st.session_state.thread_id:
         thread = client.beta.threads.retrieve(thread_id=st.session_state.thread_id)
 
-    instructions = """
-    Please remember to always check each time for every new question if a tool is relevant to your query. \
-    Answer only in the Serbian language. 
-    """
+    instructions = "Please remember to always check each time for every new question if a tool is relevant to your query. \
+    Answer only in the Serbian language."
 
     # ako se desi error run ce po default-u trajati 10 min pre no sto se prekine -- ovo je da ne moramo da cekamo
     try:
