@@ -6,7 +6,6 @@ from time import sleep
 from json import loads as json_loads
 from json import dumps as json_dumps
 # from pdfkit import configuration, from_string
-from csv import reader, writer
 from myfunc.mojafunkcija import (
     st_style,
     positive_login,
@@ -43,10 +42,15 @@ from myfunc.mojafunkcija import open_file
 client = OpenAI()
 our_assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
 
-with open(file="threads.csv", mode="r") as f:
-    reader = reader(f)
-    next(reader)
-    saved_threads = dict(reader)
+creds_dict = st.secrets["google_service_account"]
+scope = ["https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+
+client = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope))
+sheet = client.open_by_key(getenv("G_SHEET_ID")).sheet1
+
+values = sheet.get_all_values()
+saved_threads = sheet.get_all_records(head=1)
 
 # Inicijalizacija session state-a
 default_session_states = {
@@ -173,8 +177,7 @@ def main():
     if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat", key="createchat"):
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
-        with open(file="threads.csv", mode="a", newline="") as f:
-            writer(f).writerow([new_chat_name, thread.id])
+        sheet.append_row([new_chat_name, thread.id])
         st.rerun()
     
     chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(saved_threads.keys()))
