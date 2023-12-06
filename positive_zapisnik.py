@@ -230,7 +230,7 @@ def main():
             
             sleep(0.3)
             run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-
+            st.write(run_status.status)
             if run_status.status == 'completed':
                 break
 
