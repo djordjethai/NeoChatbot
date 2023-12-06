@@ -138,9 +138,20 @@ def main():
    
     # st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
     st.sidebar.header(body="Pravnik asistent; " + version)
+    with st.sidebar.expander(label="Kako koristiti?", expanded= False):
+        st.write(""" 
+1. Aplikacija vam omogucava da razgovarate o pitanjima vezima za interna dokumenta, pravilnike i sl. Pomenite sistematizaciju ili pravilnik. 
 
+2. Pamti razgovore koje ste imali do sada i mozete ih nastaviti po zelji. Odaberite iz padajuceg menija raniji razgovor i odaberite select
 
+3. Mozete zapoceti i novi ragovor. uneite ima novog razgovora i protisnite novi razgobvor , a zatim ga iz padajuceg menija odaberite i potvrdite izbor.
 
+4. Mozete uploadovati dokument i razgovarati o njegovom sadrzaju.
+
+5. Ova aplikacija nema pristup internetu, ali poseduje znanja do Marta 2023. godine.
+
+6. Za neke odgovore mozda ce trebati malo vremena, budite strpljivi.
+        """)
     # Narednih 50-tak linija su za unosenje raznih vrednosti
     st.sidebar.text("")
 
