@@ -10,8 +10,12 @@ from myfunc.mojafunkcija import (
     st_style,
     positive_login,
     open_file,)
+import nltk
 
 st.set_page_config(page_title="Positive dokumenti", page_icon="🤖")
+
+nltk.download('stopwords')
+nltk.download('punkt')
 version = "v1.1"
 getenv("OPENAI_API_KEY")
 client = openai
