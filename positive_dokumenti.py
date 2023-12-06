@@ -12,10 +12,14 @@ from myfunc.mojafunkcija import (
     open_file,)
 import nltk
 
-st.set_page_config(page_title="Positive dokumenti", page_icon="🤖")
+st.set_page_config(page_title="Positive dokumenti 1", page_icon="🤖")
 
-nltk.download('stopwords')
-nltk.download('punkt')
+packages = ['stopwords', 'punkt']
+for package in packages:
+    try:
+        nltk.data.find('tokenizers/'+package)
+    except LookupError:
+        nltk.download(package)
 version = "v1.1"
 getenv("OPENAI_API_KEY")
 client = openai
