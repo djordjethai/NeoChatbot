@@ -140,11 +140,11 @@ def main():
     st.sidebar.header(body="Zapisnik asistent; " + version)
     with st.sidebar.expander(label="Kako koristiti?", expanded = False):
         st.write("""
-1. Aplikacija vam omogucava da razgovarate o sastancima AI Tima. Sadrzi transkripte i sazetke svih sastanaka odrzanih do sada, ukupno 23. 
+1. Aplikacija vam omogucava da razgovarate o sastancima AI Tima. Sadrzi transkripte i sazetke svih sastanaka odrzanih do sada, ukupno 23. Pitajte ga za zapisnike ili sastanke AI Tima. 
 
 2. Pamti razgovore koje ste imali do sada i mozete ih nastaviti po zelji. Odaberite iz padajuceg menija raniji razgovor i odaberite select
 
-3. Mozete zapoceti i novi ragovor. uneite ima novog razgogora i protisnite novi razgobvor , a zatim ga iz padajuceg menija odaberite i potvrdite izbor.
+3. Mozete zapoceti i novi ragovor. unesite ima novog razgovora i pritisnite novi razgovor , a zatim ga iz padajuceg menija odaberite i potvrdite izbor.
 
 4. Mozete uploadovati dokument i razgovarati o njegovom sadrzaju.
 
