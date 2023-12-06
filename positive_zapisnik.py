@@ -14,8 +14,12 @@ import nltk
 
 st.set_page_config(page_title="Zapisnik asistent", page_icon="🤖")
 
-nltk.download('stopwords')
-nltk.download('punkt')
+packages = ['stopwords', 'punkt']
+for package in packages:
+    try:
+        nltk.data.find('tokenizers/'+package)
+    except LookupError:
+        nltk.download(package)
 
 version = "v1.1"
 getenv("OPENAI_API_KEY")
