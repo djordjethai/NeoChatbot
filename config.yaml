@@ -9,27 +9,51 @@ credentials:
       email: ''
       name: ''
       password: $2b$12$WnAcbYBUC377xxxxxx1NluBi8TDRSt/VvGCWAPwpl62Y84yL0AFpe
-    demo:
-      access_level: Entry
-      email: demo@demo.com
-      name: Demo
-      password: $2b$12$TfPl/63rjJPo/k5b3a0fs.z.zbQWLgU41y.2dLFWe3MnsrSCNeXDS
+    darko:
+      access_level: top
+      email: darko.perovic@positive.rs
+      name: Darko
+      password: $2b$12$p18BC.n9QALINEHdGobede0bpu67DdTv1ouMMQxWRrQXGUufIDeWy
     djordje:
-      access_level: Low
+      access_level: top
       email: djordje.medakovic@positive.rs
       name: Djordje
-      password: $2b$12$mra6Eb5fHbtN.u9nswTiYepqvysfevMqTpuPVG8AK8qMGTXsKmH5C
+      password: $2b$12$BR1Mqc436KrfqLMw5fHCSOTkFe7CMOaHYFRxWHDJJEXnEkLaTFIza
+    ecika:
+      access_level: top
+      email: djerdj.bacanji@positive.rs
+      name: Ecika
+      password: $2b$12$.zXopnWXH4K2pYnib2XyXuxPr6M1dtiukKcyfMSM6tFXnPoFmBaDS
+    goran:
+      access_level: top
+      email: goran.petrovic@positive.rs
+      name: Goran
+      password: $2b$12$.fUqqmtx1jqsk4W089j8ie0Rv5eDO/5sH8b4PRbc6.Exx3Y7fDFMm
     miljan:
-      access_level: Extra
+      access_level: top
       email: miljan.radanovic@positive.rs
       name: Miljan
-      password: $2b$12$rw5H2NApJ5ev9PCJjIccGuHgRCGzm3KMhk4i2H7cszkXH5JZqi1fW
+      password: $2b$12$3pb8FAXTmAXOTZUytXMZ/OIJUSDnzK2G5LMTxePFIZhfGn.0cltpy
+    nemanja:
+      access_level: top
+      email: nemanja.perunicic@positive.rs
+      name: Nemanja
+      password: $2b$12$IMIKt93Ur7eMkJYWDmcfHOEwhvGhnCttLZdAhNaTgsgT5wl9iaMZq
     positive:
       access_level: Top
       email: positive@positive.rs
       name: Positive
       password: $2b$12$WxxiIXrW8lYfXcfIs2GPb.GlXqDVcCj2TdcLKR6s4dgkRdbEtuQlK
+    siska:
+      access_level: top
+      email: vladimir.siska@positive.rs
+      name: Siska
+      password: $2b$12$hwNkuuO..QK5DzHiGIOYBueawut9TNVJZWAe56TwgTP3ryMgKnByS
+    timea:
+      access_level: top
+      email: timea.bosnai@positive.rs
+      name: Timea
+      password: $2b$12$wg.ptXepAsnv6akCh5qDyuglkhqaiTNkZMEZHxaRFhbI.kJCDOnV6
 preauthorized:
   emails:
   - djordje.thai@gmail.com
-
