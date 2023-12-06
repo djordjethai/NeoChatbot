@@ -11,11 +11,11 @@ from myfunc.mojafunkcija import (
     positive_login,
     open_file,)
 
-st.set_page_config(page_title="Pravnik asistent", page_icon="🤖")
+st.set_page_config(page_title="Positive dokumenti", page_icon="🤖")
 version = "v1.1"
 getenv("OPENAI_API_KEY")
 client = openai
-assistant_id = "asst_1YAl3U9XJTOnfYUJrStFO1nH"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
+assistant_id = "asst_1wkbAFV0gPxTMMb0NvzcdzfW"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
 client.beta.assistants.retrieve(assistant_id=assistant_id)
 
 # isprobati da li ovo radi kod Vas
@@ -41,7 +41,7 @@ import pinecone
 from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
 
-ovaj_asistent = "pravnik"
+ovaj_asistent = "dokumenti"
 
 global username
 def main():
@@ -66,7 +66,7 @@ def main():
         "messages": [],
         "thread_id": None,
         "cancel_run": None,
-        "namespace": "pravnik",
+        "namespace": "positive",
         }
     for key, value in default_session_states.items():
         if key not in st.session_state:
@@ -137,10 +137,10 @@ def main():
     # krecemo polako i sa definisanjem UI-a
    
     # st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
-    st.sidebar.header(body="Pravnik asistent; " + version)
+    st.sidebar.header(body="Positive Dokumenti; " + version)
     with st.sidebar.expander(label="Kako koristiti?", expanded= False):
         st.write(""" 
-1. Aplikacija vam omogucava da razgovarate o pitanjima vezanim za interna dokumenta, pravilnike i sl. Pomenite sistematizaciju ili pravilnik. 
+1. Aplikacija vam omogucava da razgovarate o pitanjima vezanim za dokumenta o portfoliju Positivea, Digitalnoj Transformaciji i vrednostima firme. Pomenite portfolio ili digitalnu transformaciju. 
 
 2. Pamti razgovore koje ste imali do sada i mozete ih nastaviti po zelji. Odaberite iz padajuceg menija raniji razgovor i odaberite select
 
