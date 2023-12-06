@@ -37,7 +37,6 @@ jsonpointer==2.4
 jsonschema==4.19.2
 jsonschema-specifications==2023.7.1
 langchain==0.0.332
-langsmith==0.0.57
 loguru==0.7.2
 lxml==4.9.3
 Markdown==3.5.1
