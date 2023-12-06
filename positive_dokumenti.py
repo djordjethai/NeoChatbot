@@ -12,7 +12,7 @@ from myfunc.mojafunkcija import (
     open_file,)
 import nltk
 
-st.set_page_config(page_title="Positive dokumenti", page_icon="🤖")
+st.set_page_config(page_title="Positive dokumenti 1", page_icon="🤖")
 
 packages = ['stopwords', 'punkt']
 for package in packages:
