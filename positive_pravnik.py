@@ -14,15 +14,12 @@ import nltk
 
 st.set_page_config(page_title="Pravnik asistent", page_icon="🤖")
 
-def download_nltk_packages():
-    packages = ['stopwords', 'punkt']
-    for package in packages:
-        try:
-            nltk.data.find('tokenizers/'+package)
-        except LookupError:
-            nltk.download(package)
-
-download_nltk_packages()
+packages = ['stopwords', 'punkt']
+for package in packages:
+    try:
+        nltk.data.find('tokenizers/'+package)
+    except LookupError:
+        nltk.download(package)
 
 version = "v1.1"
 getenv("OPENAI_API_KEY")
