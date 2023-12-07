@@ -216,7 +216,11 @@ def main():
         else:
             st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
     
+    for i in range(10):
+        print(run.status)
+        sleep(1)
 
+        
     # ako se poziva neka funkcija
     if run is not None:
         while True:
