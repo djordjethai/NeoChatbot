@@ -207,15 +207,12 @@ def main():
         pass
     """
     run = None
-    
-    if st.sidebar.button("Start", key="start"):
-        k = 0
-        while True:
-            k+=1
-            st.session_state.question = st.chat_input(placeholder="Postavite pitanje", key=f"userquestion{k}")
-            sleep(1)
-            if st.session_state.question is not None:
-                break
+
+    if st.session_state.question is None:
+        st.session_state.question = st.chat_input(placeholder="Postavite pitanje", key=f"userquestion")
+        sleep(1)
+        if st.session_state.question is None:
+            st.rerun()
         st.session_state.x = True
 
     prompt = st.session_state.question
