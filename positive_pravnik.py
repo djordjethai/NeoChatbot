@@ -12,13 +12,14 @@ from myfunc.mojafunkcija import (
     open_file,)
 import nltk
 
-st.set_page_config(page_title="Pravnik asistent", page_icon="🤖")
+st.set_page_config(page_title="Pravnik asistent 01", page_icon="🤖")
 
-packages = ['stopwords', 'punkt']
-for package in packages:
-    try:
-        nltk.data.find('tokenizers/'+package)
-    except LookupError:
+preskoci = False
+
+if "preskoci" not in st.session_state:
+    st.session_state.preskoci = True
+    packages = ['stopwords', 'punkt']
+    for package in packages:
         nltk.download(package)
 
 version = "v1.1"
