@@ -208,30 +208,19 @@ def main():
     """
     run = None
 
-    if st.session_state.question is None:
-        st.session_state.question = st.chat_input(placeholder="Postavite pitanje", key=f"userquestion")
-        sleep(1)
-        if st.session_state.question is None:
-            st.rerun()
-        st.session_state.x = True
-
-    prompt = st.session_state.question
-    sleep(0.1)
-    st.write("BBB1")
-    if st.session_state.x:
-        st.session_state.question = None
-        st.session_state.x = False
-        
-        st.write("BBB2")
-        st.write(st.session_state.question)
-        st.write(prompt)
-        if st.session_state.thread_id is not None and prompt is not None:
-            message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
-            run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
-                                instructions=instructions)
-            sleep(1)
-        else:
-            st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
+    with st.form(key="my_form", clear_on_submit=False):
+        prompt = st.text_area(
+            label="Unesite pitanje",
+            key="prompt_prva",
+            height=100)
+        if st.form_submit_button(label="Submit"):
+            if st.session_state.thread_id is not None:
+                client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
+                run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
+                                    instructions=instructions)
+                sleep(1)
+            else:
+                st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
     
 
     # ako se poziva neka funkcija
