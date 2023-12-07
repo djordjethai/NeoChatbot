@@ -14,14 +14,6 @@ import nltk
 
 st.set_page_config(page_title="Pravnik asistent 01", page_icon="🤖")
 
-preskoci = False
-
-if "preskoci" not in st.session_state:
-    st.session_state.preskoci = True
-    packages = ['stopwords', 'punkt']
-    for package in packages:
-        nltk.download(package)
-
 version = "v1.1"
 getenv("OPENAI_API_KEY")
 client = openai

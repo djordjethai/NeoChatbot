@@ -14,7 +14,7 @@ from myfunc.mojafunkcija import (
 import nltk
 
 st.set_page_config(page_title="Positive dokumenti 01", page_icon="🤖")
-preskoci = False
+#preskoci = False
 
 # if "preskoci" not in st.session_state:
 #     st.session_state.preskoci = True
