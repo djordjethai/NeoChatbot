@@ -217,17 +217,16 @@ def main():
             st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
     
     for i in range(10):
-        print(run.status)
+        st.write(run.status)
         sleep(1)
 
-        
+
     # ako se poziva neka funkcija
     if run is not None:
         while True:
             
             sleep(0.3)
             run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-            st.write(run_status.status)
             if run_status.status == 'completed':
                 break
 
