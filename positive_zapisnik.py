@@ -48,7 +48,7 @@ ovaj_asistent = "zapisnik"
 global username
 def main():
     if "username" not in st.session_state:
-        st.session_state.username = "positive"
+        st.session_state.username = username
     client = OpenAI()
 
     creds_dict = st.secrets["google_service_account"]
@@ -203,8 +203,8 @@ def main():
         run = client.beta.threads.runs.cancel(thread_id=st.session_state.thread_id, run_id=st.session_state.cancel_run)
     except:
         pass
-    run = None
     """
+    run = None
 
     # pitalica
     if prompt := st.chat_input(placeholder="Postavite pitanje"):
