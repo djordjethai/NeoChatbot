@@ -207,8 +207,8 @@ def main():
         pass
     """
     run = None
-
-    if st.session_state.question is None and st.session_state.thread_id:
+    
+    if st.sidebar.button("Start", key="start")"):
         k = 0
         while True:
             k+=1
