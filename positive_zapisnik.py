@@ -217,7 +217,8 @@ def main():
             st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
     
     for i in range(10):
-        st.write(run.status)
+        if run is not None:
+            st.write(run.status)
         sleep(1)
 
 
