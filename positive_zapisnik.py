@@ -70,6 +70,7 @@ def main():
         "cancel_run": None,
         "namespace": "zapisnici",
         "question": None,
+        "x": False,
         }
     for key, value in default_session_states.items():
         if key not in st.session_state:
@@ -209,10 +210,14 @@ def main():
 
     if st.session_state.question is None:
         st.session_state.question = st.chat_input(placeholder="Postavite pitanje")
+        st.session_state.x = True
     prompt = st.session_state.question
     sleep(0.1)
-    if st.session_state.question:
+    st.write("BBB1")
+    if st.session_state.x:
         st.session_state.question = None
+        st.session_state.x = False
+        
         st.write("BBB2")
         if st.session_state.thread_id is not None:
             message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
