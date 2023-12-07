@@ -219,6 +219,8 @@ def main():
         st.session_state.x = False
         
         st.write("BBB2")
+        st.write(st.session_state.thread_id)
+        st.write(prompt)
         if st.session_state.thread_id is not None and prompt is not None:
             message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
             run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
