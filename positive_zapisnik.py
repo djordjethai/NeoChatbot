@@ -12,7 +12,7 @@ from myfunc.mojafunkcija import (
     open_file,)
 import nltk
 
-st.set_page_config(page_title="Zapisnik asistent 01", page_icon="🤖")
+st.set_page_config(page_title="Zapisnik 02", page_icon="🤖")
 
 version = "v1.1"
 getenv("OPENAI_API_KEY")
