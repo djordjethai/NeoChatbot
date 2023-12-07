@@ -207,12 +207,12 @@ def main():
     run = None
 
     # pitalica
-    st.write("BBB")
+    st.write("BBB1")
+    sleep(1)
     if prompt := st.chat_input(placeholder="Postavite pitanje"):
-        st.write("BBB")
+        sleep(1)
+        st.write("BBB2")
         if st.session_state.thread_id is not None:
-            if prompt:
-                st.write("AAA")
             message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
             run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
                                 instructions=instructions)
