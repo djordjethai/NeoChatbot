@@ -209,15 +209,12 @@ def main():
     # pitalica
     if prompt := st.chat_input(placeholder="Postavite pitanje"):
         if st.session_state.thread_id is not None:
+            st.write(prompt)
             message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
+            run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
+                                instructions=instructions)
 
-            for i in range(10):
-                run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
-                                    instructions=instructions)
-                sleep(0.1)
-                if run is not None:
-                    break
-                sleep(1)
+            sleep(1)
         else:
             st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
     
