@@ -1,4 +1,3 @@
-from re import S
 import openai
 import streamlit as st
 import os
@@ -13,7 +12,7 @@ from myfunc.mojafunkcija import (
     open_file,)
 import nltk
 
-st.set_page_config(page_title="Positive dokumenti 01", page_icon="🤖")
+st.set_page_config(page_title="Positive dokumenti 02", page_icon="🤖")
 #preskoci = False
 
 # if "preskoci" not in st.session_state:
@@ -206,11 +205,11 @@ def main():
     Answer only in the Serbian language."
 
     # ako se desi error run ce po default-u trajati 10 min pre no sto se prekine -- ovo je da ne moramo da cekamo
-    try:
-        run = client.beta.threads.runs.cancel(thread_id=st.session_state.thread_id, run_id=st.session_state.cancel_run)
-    except:
-        pass
-    run = None
+    # try:
+    #     run = client.beta.threads.runs.cancel(thread_id=st.session_state.thread_id, run_id=st.session_state.cancel_run)
+    # except:
+    #     pass
+    # run = None
 
 
     # pitalica
