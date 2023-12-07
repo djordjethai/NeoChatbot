@@ -207,6 +207,7 @@ def main():
     run = None
 
     # pitalica
+    st.write("BBB")
     if prompt := st.chat_input(placeholder="Postavite pitanje"):
         st.write("BBB")
         if st.session_state.thread_id is not None:
