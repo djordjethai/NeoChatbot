@@ -210,7 +210,7 @@ def main():
 
     st.session_state.question = st.chat_input(placeholder="Postavite pitanje")
     sleep(0.1)
-    if st.chat_input(placeholder="Postavite pitanje"):
+    if st.session_state.question:
         st.session_state.question = None
         st.write("BBB2")
         if st.session_state.thread_id is not None:
