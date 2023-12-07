@@ -209,8 +209,11 @@ def main():
     run = None
 
     if st.session_state.question is None:
+        k = 0
         while True:
-            st.session_state.question = st.chat_input(placeholder="Postavite pitanje", key="userquestion")
+            k+=1
+            st.session_state.question = st.chat_input(placeholder="Postavite pitanje", key=f"userquestion{k}")
+            sleep(1)
             if st.session_state.question is not None:
                 break
         st.session_state.x = True
