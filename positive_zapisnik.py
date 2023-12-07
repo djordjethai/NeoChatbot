@@ -208,7 +208,7 @@ def main():
     """
     run = None
     
-    if st.sidebar.button("Start", key="start")"):
+    if st.sidebar.button("Start", key="start"):
         k = 0
         while True:
             k+=1
