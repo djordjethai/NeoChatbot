@@ -213,7 +213,6 @@ def main():
             message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
             run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
                                 instructions=instructions)
-
             sleep(1)
         else:
             st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
