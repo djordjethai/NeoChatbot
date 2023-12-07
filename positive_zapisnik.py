@@ -209,8 +209,12 @@ def main():
     run = None
 
     if st.session_state.question is None:
-        st.session_state.question = st.chat_input(placeholder="Postavite pitanje")
+        while True:
+            st.session_state.question = st.chat_input(placeholder="Postavite pitanje")
+            if st.session_state.question is not None:
+                break
         st.session_state.x = True
+        
     prompt = st.session_state.question
     sleep(0.1)
     st.write("BBB1")
