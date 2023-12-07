@@ -207,8 +207,8 @@ def main():
     """
     run = None
 
-
-    st.session_state.question = st.chat_input(placeholder="Postavite pitanje")
+    if st.session_state.question is None:
+        st.session_state.question = st.chat_input(placeholder="Postavite pitanje")
     prompt = st.session_state.question
     sleep(0.1)
     if st.session_state.question:
