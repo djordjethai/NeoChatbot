@@ -214,7 +214,9 @@ def main():
                 label="Unesite pitanje",
                 key="prompt_prva",
                 height=50)
+            st.write(prompt)
             if st.form_submit_button(label="Submit") and prompt is not None:
+                st.write(prompt)
                 if st.session_state.thread_id is not None:
                     client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
                     run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
