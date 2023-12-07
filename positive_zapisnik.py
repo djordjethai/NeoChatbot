@@ -198,13 +198,13 @@ def main():
     instructions = "Please remember to always check each time for every new question if a tool is relevant to your query. \
     Answer only in the Serbian language."
 
-    # ako se desi error run ce po default-u trajati 10 min pre no sto se prekine -- ovo je da ne moramo da cekamo
+    _ = """ ako se desi error run ce po default-u trajati 10 min pre no sto se prekine -- ovo je da ne moramo da cekamo
     try:
         run = client.beta.threads.runs.cancel(thread_id=st.session_state.thread_id, run_id=st.session_state.cancel_run)
     except:
         pass
     run = None
-
+    """
 
     # pitalica
     if prompt := st.chat_input(placeholder="Postavite pitanje"):
