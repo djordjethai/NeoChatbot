@@ -209,6 +209,7 @@ def main():
 
 
     st.session_state.question = st.chat_input(placeholder="Postavite pitanje")
+    prompt = st.session_state.question
     sleep(0.1)
     if st.session_state.question:
         st.session_state.question = None
