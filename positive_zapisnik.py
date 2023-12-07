@@ -213,14 +213,13 @@ def main():
 
             run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
                                                 instructions=instructions)
+            for i in range(10):
+                if run is not None:
+                    st.write(run.status)
+                sleep(1)
         else:
             st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
     
-    for i in range(10):
-        if run is not None:
-            st.write(run.status)
-        sleep(1)
-
 
     # ako se poziva neka funkcija
     if run is not None:
