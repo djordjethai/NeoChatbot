@@ -212,7 +212,7 @@ def main():
         with st.form(key="my_form", clear_on_submit=False):
             prompt = st.chat_input(
                 label="Unesite pitanje",
-                key="prompt_prva"
+                key="prompt_prva")
             st.write(prompt)
             if st.form_submit_button(label="Submit") and prompt is not None:
                 st.write(7676)
