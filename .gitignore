@@ -19,4 +19,4 @@ slnx.sqlite
 *.zip
 *.vs
 *.pyc
-./streamlit/secrets.toml
+secrets.toml
