@@ -208,7 +208,7 @@ def main():
     """
     run = None
 
-    if st.session_state.question is None:
+    if st.session_state.question is None and st.session_state.thread_id:
         k = 0
         while True:
             k+=1
