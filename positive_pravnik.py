@@ -70,9 +70,13 @@ def main():
     if "username" not in st.session_state:
         st.session_state.username = username
     client = OpenAI()
+    if "data" not in st.session_state:
+        st.session_state.data = None
+    if "blob_service_client" not in st.session_state:
+        st.session_state.blob_service_client = BlobServiceClient.from_connection_string(os.environ.get("AZ_BLOB_API_KEY"))
 
-    saved_threads = load_data_from_azure()
-    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads.itertuples() if st.session_state.username == thread.user and ovaj_asistent == thread.assistant}
+    st.session_state.data = load_data_from_azure()
+    threads_dict = {thread["chat"]: thread["ID"] for thread in st.session_state.data.itertuples() if st.session_state.username == thread.user and ovaj_asistent == thread.assistant}
     
     # Inicijalizacija session state-a
     default_session_states = {
@@ -82,7 +86,6 @@ def main():
         "thread_id": None,
         "cancel_run": None,
         "namespace": "pravnik",
-        "podaci": load_data_from_azure(),
         }
     for key, value in default_session_states.items():
         if key not in st.session_state:
@@ -194,7 +197,11 @@ def main():
     if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat", key="createchat"):
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
-        sheet.append_row([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent])
+        st.session_state.data.append([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent], ignore_index=True)
+        csv_data = st.session_state.data.to_csv(index=False)
+        blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "data.csv")
+        blob_client.upload_blob(csv_data, overwrite=True)
+        sleep(0.1)
         st.rerun()
     
     chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(threads_dict.keys()))
