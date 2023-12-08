@@ -200,11 +200,11 @@ def main():
             st.session_state.data = st.session_state.data.drop(st.session_state.data.columns[[4, 5]], axis=1)
         except:
             pass
-        st.write(st.session_state.data)
+
         new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent]).T
         new_row.columns = st.session_state.data.columns
-        x = pd.concat([st.session_state.data, new_row], axis=1)
-        st.table(x)
+        x = pd.concat([st.session_state.data, new_row])
+
         blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "assistant_data.csv")
         blob_client.upload_blob(x.to_csv(index=False), overwrite=True)
         sleep(0.1)
