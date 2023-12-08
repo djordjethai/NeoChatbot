@@ -64,7 +64,10 @@ def load_data_from_azure(bsc):
 global username
 def main():
     if "username" not in st.session_state:
-        st.session_state.username = username
+        try:
+            st.session_state.username = username
+        except:
+            st.session_state.username = "positive"
     client = OpenAI()
     if "data" not in st.session_state:
         st.session_state.data = None
