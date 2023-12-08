@@ -82,7 +82,7 @@ def main():
         "thread_id": None,
         "cancel_run": None,
         "namespace": "pravnik",
-        "podaci": load_data(),
+        "podaci": load_data_from_azure(),
         }
     for key, value in default_session_states.items():
         if key not in st.session_state:
