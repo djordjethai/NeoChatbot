@@ -49,7 +49,7 @@ from azure.storage.blob import BlobServiceClient
 import pandas as pd
 from io import StringIO
 
-def load_data():
+def load_data_from_azure():
     try:
         blob_service_client = BlobServiceClient.from_connection_string(os.environ.get("AZ_BLOB_API_KEY"))
         container_client = blob_service_client.get_container_client("positive-user")
@@ -71,16 +71,9 @@ def main():
         st.session_state.username = username
     client = OpenAI()
 
-    creds_dict = st.secrets["google_service_account"]
-    scope = ["https://spreadsheets.google.com/feeds",
-            "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-
-    client2 = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope))
-    sheet = client2.open_by_key(getenv("G_SHEET_ID")).sheet1
-
-    saved_threads = sheet.get_all_records(head=1)
-    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads if st.session_state.username == thread["user"] and ovaj_asistent == thread["assistant"]}
-
+    saved_threads = load_data_from_azure()
+    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads.itertuples() if st.session_state.username == thread.user and ovaj_asistent == thread.assistant}
+    
     # Inicijalizacija session state-a
     default_session_states = {
         "file_id_list": [],
