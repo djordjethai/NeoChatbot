@@ -197,6 +197,12 @@ def main():
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
         st.session_state.data.append([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent], ignore_index=True)
+
+
+        new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent])
+        st.session_state.data = pd.concat([st.session_state.data, new_row], ignore_index=True)
+
+
         csv_data = st.session_state.data.to_csv(index=False)
         blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "data.csv")
         blob_client.upload_blob(csv_data, overwrite=True)
