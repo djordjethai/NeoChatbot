@@ -69,6 +69,8 @@ def main():
         "thread_id": None,
         "cancel_run": None,
         "namespace": "zapisnici",
+        "question": None,
+        "x": False,
         }
     for key, value in default_session_states.items():
         if key not in st.session_state:
@@ -206,16 +208,20 @@ def main():
     """
     run = None
 
-    # pitalica
-    if prompt := st.chat_input(placeholder="Postavite pitanje"):
-        if st.session_state.thread_id is not None:
-            message = client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
+    if st.session_state.thread_id is not None:
+        prompt = st.chat_input(placeholder="Unesite poruku", key="chatprompt")
+        st.write(prompt)
+        if st.button(label="Submit") and prompt is not None:
+            st.write(7676)
+            st.write(prompt)
+            if st.session_state.thread_id is not None:
+                client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
+                run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
+                                    instructions=instructions)
+                sleep(1)
+            else:
+                st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
 
-            run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
-                                                instructions=instructions)
-        else:
-            st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
-    
 
     # ako se poziva neka funkcija
     if run is not None:
@@ -223,7 +229,6 @@ def main():
             
             sleep(0.3)
             run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-            st.write(run_status.status)
             if run_status.status == 'completed':
                 break
 
