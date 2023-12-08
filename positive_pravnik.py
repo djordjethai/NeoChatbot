@@ -39,7 +39,7 @@ import pinecone
 from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
 
-ovaj_asistent = "pravnik"
+ovaj_asistent = "pravnik22"
 
 from azure.storage.blob import BlobServiceClient
 import pandas as pd
