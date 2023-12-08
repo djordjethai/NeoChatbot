@@ -49,9 +49,9 @@ from azure.storage.blob import BlobServiceClient
 import pandas as pd
 from io import StringIO
 
-def load_data_from_azure():
+def load_data_from_azure(bsc):
     try:
-        blob_service_client = BlobServiceClient.from_connection_string(os.environ.get("AZ_BLOB_API_KEY"))
+        blob_service_client = bsc
         container_client = blob_service_client.get_container_client("positive-user")
         blob_client = container_client.get_blob_client("assistant_data.csv")
 
@@ -75,7 +75,7 @@ def main():
     if "blob_service_client" not in st.session_state:
         st.session_state.blob_service_client = BlobServiceClient.from_connection_string(os.environ.get("AZ_BLOB_API_KEY"))
 
-    st.session_state.data = load_data_from_azure()
+    st.session_state.data = load_data_from_azure(st.session_state.blob_service_client)
     threads_dict = {thread["chat"]: thread["ID"] for thread in st.session_state.data.itertuples() if st.session_state.username == thread.user and ovaj_asistent == thread.assistant}
     
     # Inicijalizacija session state-a
