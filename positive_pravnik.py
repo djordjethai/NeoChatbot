@@ -52,8 +52,8 @@ def load_data_from_azure(bsc):
         blob_client = container_client.get_blob_client("assistant_data.csv")
 
         streamdownloader = blob_client.download_blob()
-        return pd.read_csv(StringIO(streamdownloader.readall().decode("utf-8")))
-    
+        df = pd.read_csv(StringIO(streamdownloader.readall().decode("utf-8")), usecols=["user", "chat", "ID", "assistant"])
+        return df.dropna(how="all")               
     except FileNotFoundError:
         return {"Nisam pronasao fajl"}
     except Exception as e:
@@ -201,12 +201,12 @@ def main():
         except:
             pass
         st.write(st.session_state.data)
-        new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent], columns=st.session_state.data.columns)
-        pd.concat([st.session_state.data, new_row], axis=1)
+        new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent]).T
+        new_row.columns = st.session_state.data.columns
+        x = pd.concat([st.session_state.data, new_row], axis=1)
 
-        csv_data = st.session_state.data.to_csv(index=False)
         blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "assistant_data.csv")
-        blob_client.upload_blob(csv_data, overwrite=True)
+        blob_client.upload_blob(x.to_csv(index=False), overwrite=True)
         sleep(0.1)
         st.rerun()
     
