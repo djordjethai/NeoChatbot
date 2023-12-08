@@ -70,7 +70,6 @@ def main():
         "cancel_run": None,
         "namespace": "zapisnici",
         "question": None,
-        "x": False,
         }
     for key, value in default_session_states.items():
         if key not in st.session_state:
@@ -200,13 +199,14 @@ def main():
     instructions = "Please remember to always check each time for every new question if a tool is relevant to your query. \
     Answer only in the Serbian language."
 
-    _ = """ ako se desi error run ce po default-u trajati 10 min pre no sto se prekine -- ovo je da ne moramo da cekamo
-    try:
-        run = client.beta.threads.runs.cancel(thread_id=st.session_state.thread_id, run_id=st.session_state.cancel_run)
-    except:
-        pass
-    """
     run = None
+
+    with st.form(key="my_form", clear_on_submit=False):
+        prompt = st.text_area(
+            label="Postavite pitanje",
+            key="prompt_prva",
+            height=50)
+        submit_button = st.form_submit_button(label="Submit")
 
     if st.session_state.thread_id is not None:
         prompt = st.chat_input(placeholder="Unesite poruku", key="chatprompt")
