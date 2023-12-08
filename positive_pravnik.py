@@ -52,6 +52,8 @@ def load_data_from_azure(bsc):
         blob_client = container_client.get_blob_client("assistant_data.csv")
 
         streamdownloader = blob_client.download_blob()
+        x = pd.read_csv(StringIO(streamdownloader.readall().decode("utf-8")))
+        st.write(type(x))
         return pd.read_csv(StringIO(streamdownloader.readall().decode("utf-8")))
     
     except FileNotFoundError:
