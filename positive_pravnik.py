@@ -198,7 +198,7 @@ def main():
         st.session_state.thread_id = thread.id
 
 
-        new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent])
+        new_row = pd.DataFrame({[st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent]})
         st.session_state.data = pd.concat([st.session_state.data, new_row], ignore_index=True)
 
         csv_data = st.session_state.data.to_csv(index=False)
