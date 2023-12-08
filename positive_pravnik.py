@@ -196,7 +196,6 @@ def main():
     if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat", key="createchat"):
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
-        st.session_state.data.append([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent], ignore_index=True)
 
 
         new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent])
