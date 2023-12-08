@@ -10,7 +10,7 @@ from myfunc.mojafunkcija import (
     st_style,
     positive_login,
     open_file,)
-import nltk
+import nltk     # kasnije ce se paketi importovati u funkcijama
 
 st.set_page_config(page_title="Pravnik 02N-str ispravka", page_icon="🤖")
 
@@ -45,6 +45,26 @@ from myfunc.mojafunkcija import open_file
 
 ovaj_asistent = "pravnik"
 
+from azure.storage.blob import BlobServiceClient
+import pandas as pd
+from io import StringIO
+
+def load_data():
+    try:
+        blob_service_client = BlobServiceClient.from_connection_string(os.environ.get("AZ_BLOB_API_KEY"))
+        container_client = blob_service_client.get_container_client("positive-user")
+        blob_client = container_client.get_blob_client("assistant_data.csv")
+
+        streamdownloader = blob_client.download_blob()
+        return pd.read_csv(StringIO(streamdownloader.readall().decode("utf-8")))
+    
+    except FileNotFoundError:
+        return {"Nisam pronasao fajl"}
+    except Exception as e:
+        return {f"An error occurred: {e}"}
+
+
+
 global username
 def main():
     if "username" not in st.session_state:
@@ -69,6 +89,7 @@ def main():
         "thread_id": None,
         "cancel_run": None,
         "namespace": "pravnik",
+        "podaci": load_data(),
         }
     for key, value in default_session_states.items():
         if key not in st.session_state:
