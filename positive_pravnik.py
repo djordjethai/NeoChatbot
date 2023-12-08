@@ -197,7 +197,7 @@ def main():
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
 
-
+        st.write(type(st.session_state.data))
         new_row = pd.DataFrame({"username": st.session_state.username, 
                         "chat_name": new_chat_name, 
                         "thread_id": st.session_state.thread_id, 
