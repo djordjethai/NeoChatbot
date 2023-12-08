@@ -23,10 +23,6 @@ client.beta.assistants.retrieve(assistant_id=assistant_id)
 # isprobati da li ovo radi kod Vas
 # from custom_theme import custom_streamlit_style
 
-# importi za google drive
-from oauth2client.service_account import ServiceAccountCredentials
-import gspread
-
 # importi za funkcije
 from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
