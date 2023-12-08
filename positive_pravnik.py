@@ -52,8 +52,6 @@ def load_data_from_azure(bsc):
         blob_client = container_client.get_blob_client("assistant_data.csv")
 
         streamdownloader = blob_client.download_blob()
-        x = pd.read_csv(StringIO(streamdownloader.readall().decode("utf-8")))
-        st.write(type(x))
         return pd.read_csv(StringIO(streamdownloader.readall().decode("utf-8")))
     
     except FileNotFoundError:
@@ -198,14 +196,13 @@ def main():
     if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat", key="createchat"):
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
-
-        st.write(type(st.session_state.data))
-        new_row = pd.DataFrame({"username": st.session_state.username, 
-                        "chat_name": new_chat_name, 
-                        "thread_id": st.session_state.thread_id, 
-                        "assistant": ovaj_asistent}, index=[0])
-        st.session_state.data.append(new_row, ignore_index=True)
+        try:
+            st.session_state.data = st.session_state.data.drop(st.session_state.data.columns[[4, 5]], axis=1)
+        except:
+            pass
         st.write(st.session_state.data)
+        new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent], columns=st.session_state.data.columns)
+        pd.concat([st.session_state.data, new_row], axis=1)
 
         csv_data = st.session_state.data.to_csv(index=False)
         blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "assistant_data.csv")
