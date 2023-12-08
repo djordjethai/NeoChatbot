@@ -200,6 +200,7 @@ def main():
 
         new_row = pd.DataFrame({[st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent]})
         st.session_state.data = pd.concat([st.session_state.data, new_row], ignore_index=True)
+        st.write(st.session_state.data)
 
         csv_data = st.session_state.data.to_csv(index=False)
         blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "assistant_data.csv")
