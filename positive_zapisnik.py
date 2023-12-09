@@ -10,9 +10,9 @@ from myfunc.mojafunkcija import (
     st_style,
     positive_login,
     open_file,)
-import nltk
+import nltk     # kasnije ce se paketi importovati u funkcijama
 
-st.set_page_config(page_title="Zapisnik 02", page_icon="🤖")
+st.set_page_config(page_title="Zapisnik po uzoru na Pravnika", page_icon="🤖")
 
 version = "v1.1"
 getenv("OPENAI_API_KEY")
@@ -22,10 +22,6 @@ client.beta.assistants.retrieve(assistant_id=assistant_id)
 
 # isprobati da li ovo radi kod Vas
 # from custom_theme import custom_streamlit_style
-
-# importi za google drive
-from oauth2client.service_account import ServiceAccountCredentials
-import gspread
 
 # importi za funkcije
 from langchain.prompts.chat import (
@@ -45,22 +41,42 @@ from myfunc.mojafunkcija import open_file
 
 ovaj_asistent = "zapisnik"
 
+from azure.storage.blob import BlobServiceClient
+import pandas as pd
+from io import StringIO
+
+def load_data_from_azure(bsc):
+    try:
+        blob_service_client = bsc
+        container_client = blob_service_client.get_container_client("positive-user")
+        blob_client = container_client.get_blob_client("assistant_data.csv")
+
+        streamdownloader = blob_client.download_blob()
+        df = pd.read_csv(StringIO(streamdownloader.readall().decode("utf-8")), usecols=["user", "chat", "ID", "assistant"])
+        return df.dropna(how="all")               
+    except FileNotFoundError:
+        return {"Nisam pronasao fajl"}
+    except Exception as e:
+        return {f"An error occurred: {e}"}
+
+
+
 global username
 def main():
     if "username" not in st.session_state:
-        st.session_state.username = username
+        try:
+            st.session_state.username = username
+        except:
+            st.session_state.username = "positive"
     client = OpenAI()
+    if "data" not in st.session_state:
+        st.session_state.data = None
+    if "blob_service_client" not in st.session_state:
+        st.session_state.blob_service_client = BlobServiceClient.from_connection_string(os.environ.get("AZ_BLOB_API_KEY"))
 
-    creds_dict = st.secrets["google_service_account"]
-    scope = ["https://spreadsheets.google.com/feeds",
-            "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-
-    client2 = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope))
-    sheet = client2.open_by_key(getenv("G_SHEET_ID")).sheet1
-
-    saved_threads = sheet.get_all_records(head=1)
-    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads if st.session_state.username == thread["user"] and ovaj_asistent == thread["assistant"]}
-
+    st.session_state.data = load_data_from_azure(st.session_state.blob_service_client)
+    threads_dict = {thread.chat: thread.ID for thread in st.session_state.data.itertuples() if st.session_state.username == thread.user and ovaj_asistent == thread.assistant}
+    
     # Inicijalizacija session state-a
     default_session_states = {
         "file_id_list": [],
@@ -68,9 +84,7 @@ def main():
         "messages": [],
         "thread_id": None,
         "cancel_run": None,
-        "namespace": "zapisnici",
-        "question": None,
-        "x": False,
+        "namespace": "zapisnik",
         }
     for key, value in default_session_states.items():
         if key not in st.session_state:
@@ -142,13 +156,13 @@ def main():
    
     # st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
     st.sidebar.header(body="Zapisnik asistent; " + version)
-    with st.sidebar.expander(label="Kako koristiti?", expanded = False):
-        st.write("""
-1. Aplikacija vam omogucava da razgovarate o sastancima AI Tima. Sadrzi transkripte i sazetke svih sastanaka odrzanih do sada, ukupno 23. Pitajte ga za zapisnike ili sastanke AI Tima. 
+    with st.sidebar.expander(label="Kako koristiti?", expanded= False):
+        st.write(""" 
+1. Aplikacija vam omogucava da razgovarate o pitanjima vezanim za interna dokumenta, pravilnike i sl. Pomenite sistematizaciju ili pravilnik. 
 
 2. Pamti razgovore koje ste imali do sada i mozete ih nastaviti po zelji. Odaberite iz padajuceg menija raniji razgovor i odaberite select
 
-3. Mozete zapoceti i novi ragovor. unesite ima novog razgovora i pritisnite novi razgovor , a zatim ga iz padajuceg menija odaberite i potvrdite izbor.
+3. Mozete zapoceti i novi ragovor. unesite ime novog razgovora i pritisnite novi razgovor , a zatim ga iz padajuceg menija odaberite i potvrdite izbor.
 
 4. Mozete uploadovati dokument i razgovarati o njegovom sadrzaju.
 
@@ -156,10 +170,9 @@ def main():
 
 6. Za neke odgovore mozda ce trebati malo vremena, budite strpljivi.
         """)
-
     # Narednih 50-tak linija su za unosenje raznih vrednosti
     st.sidebar.text("")
-    
+
 
     uploaded_file = st.sidebar.file_uploader(label="Upload fajla u OpenAI embeding", key="uploadedfile")
     if st.sidebar.button(label="Upload File", key="uploadfile"):
@@ -183,7 +196,18 @@ def main():
     if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat", key="createchat"):
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
-        sheet.append_row([st.session_state.username, new_chat_name, thread.id, ovaj_asistent])
+        try:
+            st.session_state.data = st.session_state.data.drop(st.session_state.data.columns[[4, 5]], axis=1)
+        except:
+            pass
+
+        new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent]).T
+        new_row.columns = st.session_state.data.columns
+        x = pd.concat([st.session_state.data, new_row])
+
+        blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "assistant_data.csv")
+        blob_client.upload_blob(x.to_csv(index=False), overwrite=True)
+        sleep(0.1)
         st.rerun()
     
     chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(threads_dict.keys()))
@@ -200,27 +224,23 @@ def main():
     instructions = "Please remember to always check each time for every new question if a tool is relevant to your query. \
     Answer only in the Serbian language."
 
-    _ = """ ako se desi error run ce po default-u trajati 10 min pre no sto se prekine -- ovo je da ne moramo da cekamo
+    # ako se desi error run ce po default-u trajati 10 min pre no sto se prekine -- ovo je da ne moramo da cekamo
     try:
         run = client.beta.threads.runs.cancel(thread_id=st.session_state.thread_id, run_id=st.session_state.cancel_run)
     except:
         pass
-    """
     run = None
 
-    if st.session_state.thread_id is not None:
-        prompt = st.chat_input(placeholder="Unesite poruku", key="chatprompt")
-        st.write(prompt)
-        if st.button(label="Submit") and prompt is not None:
-            st.write(7676)
-            st.write(prompt)
-            if st.session_state.thread_id is not None:
-                client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
-                run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
-                                    instructions=instructions)
-                sleep(1)
-            else:
-                st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
+
+    # pitalica
+    if prompt := st.chat_input(placeholder="Postavite pitanje"):
+        if st.session_state.thread_id is not None:
+            client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
+
+            run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
+                                                instructions=instructions)
+        else:
+            st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
 
 
     # ako se poziva neka funkcija
@@ -228,7 +248,8 @@ def main():
         while True:
             
             sleep(0.3)
-            run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+            run_status = client.beta.threads.runs.retrieve(thread_id=st.session_state.thread_id, run_id=run.id)
+
             if run_status.status == 'completed':
                 break
 
@@ -248,7 +269,7 @@ def main():
                         tools_outputs.append(tool_output)
 
                 if run_status.required_action.type == 'submit_tool_outputs':
-                    client.beta.threads.runs.submit_tool_outputs(thread_id=thread.id, run_id=run.id, tool_outputs=tools_outputs)
+                    client.beta.threads.runs.submit_tool_outputs(thread_id=st.session_state.thread_id, run_id=run.id, tool_outputs=tools_outputs)
 
                 sleep(0.3)
 

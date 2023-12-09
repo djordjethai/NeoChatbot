@@ -10,7 +10,7 @@ from myfunc.mojafunkcija import (
     st_style,
     positive_login,
     open_file,)
-import nltk
+import nltk     # kasnije ce se paketi importovati u funkcijama
 
 st.set_page_config(page_title="Pravnik 02N-str ispravka", page_icon="🤖")
 
@@ -22,10 +22,6 @@ client.beta.assistants.retrieve(assistant_id=assistant_id)
 
 # isprobati da li ovo radi kod Vas
 # from custom_theme import custom_streamlit_style
-
-# importi za google drive
-from oauth2client.service_account import ServiceAccountCredentials
-import gspread
 
 # importi za funkcije
 from langchain.prompts.chat import (
@@ -45,22 +41,42 @@ from myfunc.mojafunkcija import open_file
 
 ovaj_asistent = "pravnik"
 
+from azure.storage.blob import BlobServiceClient
+import pandas as pd
+from io import StringIO
+
+def load_data_from_azure(bsc):
+    try:
+        blob_service_client = bsc
+        container_client = blob_service_client.get_container_client("positive-user")
+        blob_client = container_client.get_blob_client("assistant_data.csv")
+
+        streamdownloader = blob_client.download_blob()
+        df = pd.read_csv(StringIO(streamdownloader.readall().decode("utf-8")), usecols=["user", "chat", "ID", "assistant"])
+        return df.dropna(how="all")               
+    except FileNotFoundError:
+        return {"Nisam pronasao fajl"}
+    except Exception as e:
+        return {f"An error occurred: {e}"}
+
+
+
 global username
 def main():
     if "username" not in st.session_state:
-        st.session_state.username = username
+        try:
+            st.session_state.username = username
+        except:
+            st.session_state.username = "positive"
     client = OpenAI()
+    if "data" not in st.session_state:
+        st.session_state.data = None
+    if "blob_service_client" not in st.session_state:
+        st.session_state.blob_service_client = BlobServiceClient.from_connection_string(os.environ.get("AZ_BLOB_API_KEY"))
 
-    creds_dict = st.secrets["google_service_account"]
-    scope = ["https://spreadsheets.google.com/feeds",
-            "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-
-    client2 = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope))
-    sheet = client2.open_by_key(getenv("G_SHEET_ID")).sheet1
-
-    saved_threads = sheet.get_all_records(head=1)
-    threads_dict = {thread["chat"]: thread["ID"] for thread in saved_threads if st.session_state.username == thread["user"] and ovaj_asistent == thread["assistant"]}
-
+    st.session_state.data = load_data_from_azure(st.session_state.blob_service_client)
+    threads_dict = {thread.chat: thread.ID for thread in st.session_state.data.itertuples() if st.session_state.username == thread.user and ovaj_asistent == thread.assistant}
+    
     # Inicijalizacija session state-a
     default_session_states = {
         "file_id_list": [],
@@ -180,7 +196,18 @@ def main():
     if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat", key="createchat"):
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
-        sheet.append_row([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent])
+        try:
+            st.session_state.data = st.session_state.data.drop(st.session_state.data.columns[[4, 5]], axis=1)
+        except:
+            pass
+
+        new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent]).T
+        new_row.columns = st.session_state.data.columns
+        x = pd.concat([st.session_state.data, new_row])
+
+        blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "assistant_data.csv")
+        blob_client.upload_blob(x.to_csv(index=False), overwrite=True)
+        sleep(0.1)
         st.rerun()
     
     chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(threads_dict.keys()))
