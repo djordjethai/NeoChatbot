@@ -7,14 +7,13 @@ from json import loads as json_loads
 from json import dumps as json_dumps
 # from pdfkit import configuration, from_string
 from myfunc.mojafunkcija import (
-    st_style,
     positive_login,
     open_file,)
 import nltk     # kasnije ce se paketi importovati u funkcijama
 
-st.set_page_config(page_title="Pravnik 02N-str ispravka", page_icon="🤖")
+st.set_page_config(page_title="Pravnik", page_icon="🤖")
 
-version = "v1.1"
+version = "v1.1 Azure"
 getenv("OPENAI_API_KEY")
 client = openai
 assistant_id = "asst_1YAl3U9XJTOnfYUJrStFO1nH"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
@@ -47,7 +46,7 @@ import pandas as pd
 from io import StringIO
 
 
-# global username
+global username
 
 def read_aad_username():
     js_code = """(await fetch("/.auth/me")
@@ -88,13 +87,17 @@ def load_data_from_azure(bsc):
 def main():
     if "username" not in st.session_state:
         st.session_state.username = "positive"
-    st.session_state.username = read_aad_username()
+    if deployment_environment == "Azure":    
+        st.session_state.username = read_aad_username()
+    elif deployment_environment == "Windows":
+        st.session_state.username = "lokal"
+    elif deployment_environment == "Streamlit":
+        st.session_state.username = username
+    
     with st.sidebar:
         st.info(
             f"Prijavljeni ste kao: {st.session_state.username}")
     
-    
-    st.write(st.session_state.username)
     client = OpenAI()
     if "data" not in st.session_state:
         st.session_state.data = None
