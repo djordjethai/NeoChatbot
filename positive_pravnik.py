@@ -47,6 +47,8 @@ import pandas as pd
 from io import StringIO
 
 
+# global username
+
 def read_aad_username():
     js_code = """(await fetch("/.auth/me")
         .then(function(response) {return response.json();}).then(function(body) {return body;}))
@@ -82,17 +84,17 @@ def load_data_from_azure(bsc):
 
 
 
-global username
+
 def main():
-    username = read_aad_username()
+    if "username" not in st.session_state:
+        st.session_state.username = "positive"
+    st.session_state.username = read_aad_username()
     with st.sidebar:
         st.info(
-            f"Prijavljeni ste kao: {username}")
-    if "username" not in st.session_state:
-        try:
-            st.session_state.username = username
-        except:
-            st.session_state.username = "positive"
+            f"Prijavljeni ste kao: {st.session_state.username}")
+    
+    
+    st.write(st.session_state.username)
     client = OpenAI()
     if "data" not in st.session_state:
         st.session_state.data = None
@@ -314,6 +316,7 @@ def main():
 
 # Deployment on Stremalit Login functionality
 deployment_environment = os.environ.get("DEPLOYMENT_ENVIRONMENT")
+
 
 if deployment_environment == "Streamlit":
     name, authentication_status, username = positive_login(main, " ")
