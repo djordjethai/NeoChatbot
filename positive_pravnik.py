@@ -204,7 +204,7 @@ def main():
     st.sidebar.text("")
 
 
-    uploaded_file = st.sidebar.file_uploader(label="Upload fajla u OpenAI embeding", key="uploadedfile")
+    uploaded_file = st.sidebar.file_uploader(label="Upload fajla u OpenAI embeding", key="uploadedfile", type=["txt", "pdf", "docx"])
     if st.sidebar.button(label="Upload File", key="uploadfile"):
         try:
             with open(file=f"{uploaded_file.name}", mode="wb") as f:
