@@ -58,24 +58,12 @@ def read_aad_username():
     if return_value == 0:
         pass  # this is the result before the actual value is returned
     elif isinstance(return_value, list) and len(return_value) > 0:  # this is the actual value
-        username = return_value[0]["name"]
-        #uname = return_value[0]["user_id"]
-        #st.write(f"Logged in as {username}")
+        username = return_value[0]["user_id"]
     else:
         st.warning(
             f"could not directly read username from azure active directory: {return_value}.")  # this is an error
-        st.warning(
-            f"A workaround to this is to clear your browser cookies for this site and reloading it.")
+    
     return username
-
-
-# Get the current user's username
-current_user = read_aad_username()
-phtable = st.empty()
-with st.sidebar:
-    st.info(
-        f"Prijavljeni ste kao: {current_user} ")
-
 
 
 def load_data_from_azure(bsc):
@@ -96,9 +84,13 @@ def load_data_from_azure(bsc):
 
 global username
 def main():
+    username = read_aad_username()
+    with st.sidebar:
+        st.info(
+            f"Prijavljeni ste kao: {username}")
     if "username" not in st.session_state:
         try:
-            st.session_state.username = read_aad_username()
+            st.session_state.username = username
         except:
             st.session_state.username = "positive"
     client = OpenAI()
