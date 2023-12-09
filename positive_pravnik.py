@@ -38,12 +38,44 @@ from openai import OpenAI   # !?
 import pinecone
 from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
+from streamlit_javascript import st_javascript
 
 ovaj_asistent = "pravnik"
 
 from azure.storage.blob import BlobServiceClient
 import pandas as pd
 from io import StringIO
+
+
+def read_aad_username():
+    js_code = """(await fetch("/.auth/me")
+        .then(function(response) {return response.json();}).then(function(body) {return body;}))
+    """
+
+    return_value = st_javascript(js_code)
+
+    username = None
+    if return_value == 0:
+        pass  # this is the result before the actual value is returned
+    elif isinstance(return_value, list) and len(return_value) > 0:  # this is the actual value
+        username = return_value[0]     # ["user_id"]
+        #uname = return_value[0]["user_id"]
+        st.write(f"Logged in as {username}")
+    else:
+        st.warning(
+            f"could not directly read username from azure active directory: {return_value}.")  # this is an error
+        st.warning(
+            f"A workaround to this is to clear your browser cookies for this site and reloading it.")
+    return username
+
+
+# Get the current user's username
+current_user = read_aad_username()
+phtable = st.empty()
+st.info(
+    f"Current User is: {current_user} ")
+
+
 
 def load_data_from_azure(bsc):
     try:
