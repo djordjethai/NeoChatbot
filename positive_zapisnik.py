@@ -12,9 +12,9 @@ from myfunc.mojafunkcija import (
     open_file,)
 import nltk     # kasnije ce se paketi importovati u funkcijama
 
-st.set_page_config(page_title="Zapisnik po uzoru na Pravnika", page_icon="🤖")
+st.set_page_config(page_title="Zapisnik", page_icon="🤖")
 
-version = "v1.1"
+version = "v1.1.1 Azure, username i upload file"
 getenv("OPENAI_API_KEY")
 client = openai
 assistant_id = "asst_289ViiMYpvV4UGn3mRHgOAr4"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
@@ -38,12 +38,36 @@ from openai import OpenAI   # !?
 import pinecone
 from pinecone_text.sparse import BM25Encoder
 from myfunc.mojafunkcija import open_file
+from streamlit_javascript import st_javascript
 
 ovaj_asistent = "zapisnik"
 
 from azure.storage.blob import BlobServiceClient
 import pandas as pd
 from io import StringIO
+
+
+global username
+
+def read_aad_username():
+    js_code = """(await fetch("/.auth/me")
+        .then(function(response) {return response.json();}).then(function(body) {return body;}))
+    """
+
+    return_value = st_javascript(js_code)
+
+    username = None
+    if return_value == 0:
+        pass  # this is the result before the actual value is returned
+    elif isinstance(return_value, list) and len(return_value) > 0:  # this is the actual value
+        username = return_value[0]["user_id"]
+    else:
+        st.warning(
+            f"could not directly read username from azure active directory: {return_value}.")  # this is an error
+    
+    return username
+
+
 
 def load_data_from_azure(bsc):
     try:
@@ -61,13 +85,21 @@ def load_data_from_azure(bsc):
 
 
 
-global username
+
 def main():
     if "username" not in st.session_state:
-        try:
-            st.session_state.username = username
-        except:
-            st.session_state.username = "positive"
+        st.session_state.username = "positive"
+    if deployment_environment == "Azure":    
+        st.session_state.username = read_aad_username()
+    elif deployment_environment == "Windows":
+        st.session_state.username = "lokal"
+    elif deployment_environment == "Streamlit":
+        st.session_state.username = username
+    
+    with st.sidebar:
+        st.info(
+            f"Prijavljeni ste kao: {st.session_state.username}")
+        
     client = OpenAI()
     if "data" not in st.session_state:
         st.session_state.data = None
@@ -155,7 +187,9 @@ def main():
     # krecemo polako i sa definisanjem UI-a
    
     # st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
-    st.sidebar.header(body="Zapisnik asistent; " + version)
+    st.sidebar.header(body="Zapisnik asistent")
+    st.sidebar.caption(f"Ver. {version}")
+    
     with st.sidebar.expander(label="Kako koristiti?", expanded= False):
         st.write(""" 
 1. Aplikacija vam omogucava da razgovarate o pitanjima vezanim za interna dokumenta, pravilnike i sl. Pomenite sistematizaciju ili pravilnik. 

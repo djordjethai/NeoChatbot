@@ -13,7 +13,7 @@ import nltk     # kasnije ce se paketi importovati u funkcijama
 
 st.set_page_config(page_title="Pravnik", page_icon="🤖")
 
-version = "v1.1 Azure"
+version = "v1.1.1 Azure, username i upload file"
 getenv("OPENAI_API_KEY")
 client = openai
 assistant_id = "asst_1YAl3U9XJTOnfYUJrStFO1nH"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
@@ -185,7 +185,8 @@ def main():
     # krecemo polako i sa definisanjem UI-a
    
     # st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
-    st.sidebar.header(body="Pravnik asistent; " + version)
+    st.sidebar.header(body="Pravnik asistent")
+    st.sidebar.caption(f"Ver. {version}")
     with st.sidebar.expander(label="Kako koristiti?", expanded= False):
         st.write(""" 
 1. Aplikacija vam omogucava da razgovarate o pitanjima vezanim za interna dokumenta, pravilnike i sl. Pomenite sistematizaciju ili pravilnik. 
