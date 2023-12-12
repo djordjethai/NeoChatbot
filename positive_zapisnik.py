@@ -46,6 +46,7 @@ from azure.storage.blob import BlobServiceClient
 import pandas as pd
 from io import StringIO
 
+import ast
 
 global username
 
@@ -76,7 +77,9 @@ def load_data_from_azure(bsc):
         blob_client = container_client.get_blob_client("assistant_data.csv")
 
         streamdownloader = blob_client.download_blob()
-        df = pd.read_csv(StringIO(streamdownloader.readall().decode("utf-8")), usecols=["user", "chat", "ID", "assistant"])
+        df = pd.read_csv(StringIO(streamdownloader.readall().decode("utf-8")), usecols=["user", "chat", "ID", "assistant", "fajlovi"])
+        
+        df["fajlovi"] = df["fajlovi"].apply(ast.literal_eval)
         return df.dropna(how="all")               
     except FileNotFoundError:
         return {"Nisam pronasao fajl"}
@@ -105,18 +108,24 @@ def main():
         st.session_state.data = None
     if "blob_service_client" not in st.session_state:
         st.session_state.blob_service_client = BlobServiceClient.from_connection_string(os.environ.get("AZ_BLOB_API_KEY"))
+    if "delete_thread_id" not in st.session_state:
+        st.session_state.delete_thread_id = None
 
     st.session_state.data = load_data_from_azure(st.session_state.blob_service_client)
-    threads_dict = {thread.chat: thread.ID for thread in st.session_state.data.itertuples() if st.session_state.username == thread.user and ovaj_asistent == thread.assistant}
-    
+
+    st.session_state.data = st.session_state.data[st.session_state.data.ID != st.session_state.delete_thread_id]
+    threads_dict = {thread.chat: thread.ID for thread in st.session_state.data.itertuples() if st.session_state.username == thread.user and ovaj_asistent == thread.assistant and thread.ID is not st.session_state.delete_thread_id}
+
     # Inicijalizacija session state-a
     default_session_states = {
         "file_id_list": [],
         "openai_model": "gpt-4-1106-preview",
         "messages": [],
         "thread_id": None,
+        "is_deleted": False,
         "cancel_run": None,
         "namespace": "zapisnik",
+        "columns": ["user", "chat", "ID", "assistant", "fajlovi"],
         }
     for key, value in default_session_states.items():
         if key not in st.session_state:
@@ -173,17 +182,6 @@ def main():
                 )
         return str(ChatPromptTemplate(messages=[system_message, human_message]))
 
-
-    
-
-    # funkcije za scrape-ovanje i upload-ovanje dokumenata
-    def upload_to_openai(filepath):
-        with open(filepath, "rb") as f:
-            response = openai.files.create(file=f.read(), purpose="assistants")
-        return response.id
-
-
-
     # krecemo polako i sa definisanjem UI-a
    
     # st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
@@ -207,7 +205,12 @@ def main():
     # Narednih 50-tak linija su za unosenje raznih vrednosti
     st.sidebar.text("")
 
-
+    # funkcije za scrape-ovanje i upload-ovanje dokumenata
+    def upload_to_openai(filepath):
+        with open(filepath, "rb") as f:
+            response = openai.files.create(file=f.read(), purpose="assistants")
+        return response.id
+    
     uploaded_file = st.sidebar.file_uploader(label="Upload fajla u OpenAI embeding", key="uploadedfile")
     if st.sidebar.button(label="Upload File", key="uploadfile"):
         try:
@@ -215,27 +218,28 @@ def main():
                 f.write(uploaded_file.getbuffer())
             st.session_state.file_id_list.append(
                 upload_to_openai(filepath=f"{uploaded_file.name}"))
+            try:
+                st.session_state.data = st.session_state.data.drop(st.session_state.data.columns[[5, 6]], axis=1)
+            except:
+                pass
+
+            st.session_state.data.loc[st.session_state.data["ID"] == st.session_state.thread_id, 
+                                      "fajlovi"].apply(lambda g: g.append(st.session_state.file_id_list[-1]) or g)
+            blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "assistant_data.csv")
+            blob_client.upload_blob(st.session_state.data.to_csv(index=False), overwrite=True)
+            client.beta.assistants.files.create(assistant_id="asst_289ViiMYpvV4UGn3mRHgOAr4", file_id=st.session_state.file_id_list[-1])
+            
         except Exception as e:
             st.warning("Opis greške:\n\n" + str(e))
-
-    if st.session_state.file_id_list:
-        st.sidebar.write("ID-jevi svih upload-ovanih fajlova:")
-        for file_id in st.session_state.file_id_list:
-            st.sidebar.write(file_id)
-            # povezivanje fajla sa asistentom
-            client.beta.assistants.files.create(assistant_id=assistant_id, file_id=file_id)
 
     st.sidebar.text("")
     new_chat_name = st.sidebar.text_input(label="Unesite ime za novi chat", key="newchatname")
     if new_chat_name.strip() != "" and st.sidebar.button(label="Create Chat", key="createchat"):
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
-        try:
-            st.session_state.data = st.session_state.data.drop(st.session_state.data.columns[[4, 5]], axis=1)
-        except:
-            pass
 
-        new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent]).T
+        new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent, "[]"]).T
+        
         new_row.columns = st.session_state.data.columns
         x = pd.concat([st.session_state.data, new_row])
 
@@ -249,6 +253,27 @@ def main():
         thread = client.beta.threads.retrieve(thread_id=threads_dict.get(chosen_chat))
         st.session_state.thread_id = thread.id
         st.rerun()
+
+    st.sidebar.text("")
+
+    chat_for_deletion = st.sidebar.selectbox(label="Delete chat", options=["Select..."] + list(threads_dict.keys()), key="chatfordeletion")
+    if chat_for_deletion.strip() not in ["", "Select..."] and st.sidebar.button(label="Delete Chat", key="deletechat"):
+        thread = client.beta.threads.retrieve(thread_id=threads_dict.get(chat_for_deletion))
+        files_for_deletion = st.session_state.data.loc[st.session_state.data["ID"] == thread.id, "fajlovi"].values[0]
+        for file_id in files_for_deletion:
+            client.beta.assistants.files.delete(
+                assistant_id="asst_289ViiMYpvV4UGn3mRHgOAr4",
+                file_id=file_id,
+            )
+
+        st.session_state.delete_thread_id = thread.id
+        st.session_state.is_deleted = True
+        st.rerun()
+
+    if st.session_state.is_deleted:
+        blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "assistant_data.csv")
+        blob_client.upload_blob(st.session_state.data.to_csv(index=False), overwrite=True)
+        st.session_state.is_deleted = False
 
     st.sidebar.text("")
     assistant = client.beta.assistants.retrieve(assistant_id=assistant_id)
