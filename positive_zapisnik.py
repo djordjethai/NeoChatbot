@@ -85,6 +85,10 @@ def load_data_from_azure(bsc):
         return {f"An error occurred: {e}"}
 
 
+def upload_data_to_azure(z):
+    z["fajlovi"] = z["fajlovi"].apply(lambda z: str(z))
+    blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "assistant_data.csv")
+    blob_client.upload_blob(z.to_csv(index=False), overwrite=True)
 
 
 def main():
@@ -227,8 +231,7 @@ def main():
 
             st.session_state.data.loc[st.session_state.data["ID"] == st.session_state.thread_id, 
                                       "fajlovi"].apply(lambda g: g.append(st.session_state.file_id_list[-1]) or g)
-            blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "assistant_data.csv")
-            blob_client.upload_blob(st.session_state.data.to_csv(index=False), overwrite=True)
+            upload_data_to_azure(st.session_state.data)
             client.beta.assistants.files.create(assistant_id="asst_289ViiMYpvV4UGn3mRHgOAr4", file_id=st.session_state.file_id_list[-1])
             
         except Exception as e:
@@ -241,13 +244,9 @@ def main():
         st.session_state.thread_id = thread.id
 
         new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent, "[]"]).T
-        
         new_row.columns = st.session_state.data.columns
-        x = pd.concat([st.session_state.data, new_row])
 
-        blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "assistant_data.csv")
-        blob_client.upload_blob(x.to_csv(index=False), overwrite=True)
-        sleep(0.1)
+        upload_data_to_azure(pd.concat([st.session_state.data, new_row]))
         st.rerun()
     
     chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(threads_dict.keys()))
@@ -273,8 +272,7 @@ def main():
         st.rerun()
 
     if st.session_state.is_deleted:
-        blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "assistant_data.csv")
-        blob_client.upload_blob(st.session_state.data.to_csv(index=False), overwrite=True)
+        upload_data_to_azure(st.session_state.data)
         st.session_state.is_deleted = False
 
     st.sidebar.text("")
