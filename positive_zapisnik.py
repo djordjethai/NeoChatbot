@@ -67,8 +67,7 @@ def read_aad_username():
             f"could not directly read username from azure active directory: {return_value}.")  # this is an error
     
     return username
-
-
+    
 
 def load_data_from_azure(bsc):
     try:
@@ -78,8 +77,6 @@ def load_data_from_azure(bsc):
 
         streamdownloader = blob_client.download_blob()
         df = pd.read_csv(StringIO(streamdownloader.readall().decode("utf-8")), usecols=["user", "chat", "ID", "assistant", "fajlovi"])
-        
-
         df["fajlovi"] = df["fajlovi"].apply(ast.literal_eval)
         return df.dropna(how="all")               
     except FileNotFoundError:
