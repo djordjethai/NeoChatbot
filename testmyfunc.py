@@ -90,7 +90,7 @@ def hybrid_search_process(upit: str) -> str:
                 vector=hdense,
                 sparse_vector=hsparse,
                 include_metadata=True,
-                namespace=st.session_state.namespace,
+                namespace="zapisnik",
                 ).to_dict()
 
         tematika = hybrid_query()

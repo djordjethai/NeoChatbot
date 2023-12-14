@@ -32,42 +32,37 @@ from langchain.prompts.chat import (
 # from langchain.utilities import GoogleSerperAPIWrapper
 
 from os import environ
-
 import pinecone
 from pinecone_text.sparse import BM25Encoder
 from streamlit_javascript import st_javascript
 
-ovaj_asistent = "zapisnik"
 from io import StringIO
-
 import ast
 """
 
 from azure.storage.blob import BlobServiceClient
 import pandas as pd
-from openai import OpenAI
 
 import testmyfunc
 
-
+client = openai.OpenAI()
+ovaj_asistent = "zapisnik"
 global username
 
 def main():
     if "username" not in st.session_state:
         st.session_state.username = "positive"
 
-    if deployment_environment == "Azure":    
-        st.session_state.username = testmyfunc.read_aad_username()
-    elif deployment_environment == "Windows":
-        st.session_state.username = "lokal"
-    elif deployment_environment == "Streamlit":
-        st.session_state.username = username
+    username_dict = {
+    "Azure": testmyfunc.read_aad_username(),
+    "Windows": "lokal",
+    "Streamlit": username
+    }
+    st.session_state.username = username_dict.get(deployment_environment)
     
     with st.sidebar:
-        st.info(
-            f"Prijavljeni ste kao: {st.session_state.username}")
-        
-    client = OpenAI()
+        st.info(f"Prijavljeni ste kao: {st.session_state.username}")
+
 
     if "data" not in st.session_state:
         st.session_state.data = None
