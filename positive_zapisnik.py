@@ -5,12 +5,10 @@ from os import getenv
 from time import sleep
 from json import loads as json_loads
 from json import dumps as json_dumps
-# from pdfkit import configuration, from_string
-from myfunc.mojafunkcija import (
-    st_style,
-    positive_login,
-    open_file,)
-import nltk     # kasnije ce se paketi importovati u funkcijama
+
+from myfunc.mojafunkcija import positive_login
+
+import nltk     # ovo treba; kasnije ce se paketi importovati u funkcijama
 
 st.set_page_config(page_title="Zapisnik", page_icon="🤖")
 
@@ -20,10 +18,11 @@ client = openai
 assistant_id = "asst_289ViiMYpvV4UGn3mRHgOAr4"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
 client.beta.assistants.retrieve(assistant_id=assistant_id)
 
+_ = """
 # isprobati da li ovo radi kod Vas
 # from custom_theme import custom_streamlit_style
 
-# importi za funkcije
+importi za funkcije
 from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
@@ -33,69 +32,32 @@ from langchain.prompts.chat import (
 # from langchain.utilities import GoogleSerperAPIWrapper
 
 from os import environ
-from openai import OpenAI   # !?
 
 import pinecone
 from pinecone_text.sparse import BM25Encoder
-from myfunc.mojafunkcija import open_file
 from streamlit_javascript import st_javascript
 
 ovaj_asistent = "zapisnik"
-
-from azure.storage.blob import BlobServiceClient
-import pandas as pd
 from io import StringIO
 
 import ast
+"""
+
+from azure.storage.blob import BlobServiceClient
+import pandas as pd
+from openai import OpenAI
+
+import testmyfunc
+
 
 global username
-
-def read_aad_username():
-    js_code = """(await fetch("/.auth/me")
-        .then(function(response) {return response.json();}).then(function(body) {return body;}))
-    """
-
-    return_value = st_javascript(js_code)
-
-    username = None
-    if return_value == 0:
-        pass  # this is the result before the actual value is returned
-    elif isinstance(return_value, list) and len(return_value) > 0:  # this is the actual value
-        username = return_value[0]["user_id"]
-    else:
-        st.warning(
-            f"could not directly read username from azure active directory: {return_value}.")  # this is an error
-    
-    return username
-    
-
-def load_data_from_azure(bsc):
-    try:
-        blob_service_client = bsc
-        container_client = blob_service_client.get_container_client("positive-user")
-        blob_client = container_client.get_blob_client("assistant_data.csv")
-
-        streamdownloader = blob_client.download_blob()
-        df = pd.read_csv(StringIO(streamdownloader.readall().decode("utf-8")), usecols=["user", "chat", "ID", "assistant", "fajlovi"])
-        df["fajlovi"] = df["fajlovi"].apply(ast.literal_eval)
-        return df.dropna(how="all")               
-    except FileNotFoundError:
-        return {"Nisam pronasao fajl"}
-    except Exception as e:
-        return {f"An error occurred: {e}"}
-
-
-def upload_data_to_azure(z):
-    z["fajlovi"] = z["fajlovi"].apply(lambda z: str(z))
-    blob_client = st.session_state.blob_service_client.get_blob_client("positive-user", "assistant_data.csv")
-    blob_client.upload_blob(z.to_csv(index=False), overwrite=True)
-
 
 def main():
     if "username" not in st.session_state:
         st.session_state.username = "positive"
+
     if deployment_environment == "Azure":    
-        st.session_state.username = read_aad_username()
+        st.session_state.username = testmyfunc.read_aad_username()
     elif deployment_environment == "Windows":
         st.session_state.username = "lokal"
     elif deployment_environment == "Streamlit":
@@ -106,14 +68,16 @@ def main():
             f"Prijavljeni ste kao: {st.session_state.username}")
         
     client = OpenAI()
+
     if "data" not in st.session_state:
         st.session_state.data = None
-    if "blob_service_client" not in st.session_state:
+    if "blob_service_client" not in st.session_state:   # i nakon ovoga ga vise ne diramo :)
         st.session_state.blob_service_client = BlobServiceClient.from_connection_string(os.environ.get("AZ_BLOB_API_KEY"))
     if "delete_thread_id" not in st.session_state:
         st.session_state.delete_thread_id = None
 
-    st.session_state.data = load_data_from_azure(st.session_state.blob_service_client)
+
+    st.session_state.data = testmyfunc.azure_load_or_upload(st.session_state.blob_service_client, None, "Load")
 
     try:
         st.session_state.data = st.session_state.data[st.session_state.data.ID != st.session_state.delete_thread_id]
@@ -138,55 +102,7 @@ def main():
             st.session_state[key] = value
 
 
-    def hybrid_search_process(upit: str) -> str:
-        alpha = 0.5
-
-        pinecone.init(
-            api_key=environ["PINECONE_API_KEY_POS"],
-            environment=environ["PINECONE_ENVIRONMENT_POS"],
-        )
-        index = pinecone.Index("positive")
-
-        def hybrid_query():
-            def get_embedding(text, model="text-embedding-ada-002"):
-                text = text.replace("\n", " ")
-                return client.embeddings.create(input = [text], model=model).data[0].embedding
-        
-            hybrid_score_norm = (lambda dense, sparse, alpha: 
-                                 ([v * alpha for v in dense], 
-                                  {"indices": sparse["indices"], 
-                                   "values": [v * (1 - alpha) for v in sparse["values"]]}
-                                   ))
-            hdense, hsparse = hybrid_score_norm(
-                sparse = BM25Encoder().fit([upit]).encode_queries(upit),
-                dense=get_embedding(upit),
-                alpha=alpha,
-            )
-            return index.query(
-                top_k=6,
-                vector=hdense,
-                sparse_vector=hsparse,
-                include_metadata=True,
-                namespace=st.session_state.namespace,
-                ).to_dict()
-
-        tematika = hybrid_query()
-
-        uk_teme = ""
-        for _, item in enumerate(tematika["matches"]):
-            if item["score"] > 0.05:    # score
-                uk_teme += item["metadata"]["context"] + "\n\n"
-
-        system_message = SystemMessagePromptTemplate.from_template(
-            template="You are a helpful assistent. You always answer in the Serbian language.").format()
-
-        human_message = HumanMessagePromptTemplate.from_template(
-            template=open_file("prompt_FT.txt")).format(
-                zahtev=upit,
-                uk_teme=uk_teme,
-                ft_model="gpt-4-1106-preview",
-                )
-        return str(ChatPromptTemplate(messages=[system_message, human_message]))
+    # HYBRID
 
     # krecemo polako i sa definisanjem UI-a
    
@@ -212,10 +128,7 @@ def main():
     st.sidebar.text("")
 
     # funkcije za scrape-ovanje i upload-ovanje dokumenata
-    def upload_to_openai(filepath):
-        with open(filepath, "rb") as f:
-            response = openai.files.create(file=f.read(), purpose="assistants")
-        return response.id
+    # UPLOAD TO OPENAI
     
     uploaded_file = st.sidebar.file_uploader(label="Upload fajla u OpenAI embeding", key="uploadedfile")
     if st.sidebar.button(label="Upload File", key="uploadfile"):
@@ -223,7 +136,7 @@ def main():
             with open(file=f"{uploaded_file.name}", mode="wb") as f:
                 f.write(uploaded_file.getbuffer())
             st.session_state.file_id_list.append(
-                upload_to_openai(filepath=f"{uploaded_file.name}"))
+                testmyfunc.upload_to_openai(filepath=f"{uploaded_file.name}"))
             try:
                 st.session_state.data = st.session_state.data.drop(st.session_state.data.columns[[5, 6]], axis=1)
             except:
@@ -231,7 +144,9 @@ def main():
 
             st.session_state.data.loc[st.session_state.data["ID"] == st.session_state.thread_id, 
                                       "fajlovi"].apply(lambda g: g.append(st.session_state.file_id_list[-1]) or g)
-            upload_data_to_azure(st.session_state.data)
+            
+            testmyfunc.azure_load_or_upload(st.session_state.blob_service_client, st.session_state.data, "Upload")
+
             client.beta.assistants.files.create(assistant_id="asst_289ViiMYpvV4UGn3mRHgOAr4", file_id=st.session_state.file_id_list[-1])
             
         except Exception as e:
@@ -246,7 +161,7 @@ def main():
         new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent, "[]"]).T
         new_row.columns = st.session_state.data.columns
 
-        upload_data_to_azure(pd.concat([st.session_state.data, new_row]))
+        testmyfunc.azure_load_or_upload(st.session_state.blob_service_client, pd.concat([st.session_state.data, new_row]), "Upload")
         st.rerun()
     
     chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(threads_dict.keys()))
@@ -272,7 +187,7 @@ def main():
         st.rerun()
 
     if st.session_state.is_deleted:
-        upload_data_to_azure(st.session_state.data)
+        testmyfunc.azure_load_or_upload(st.session_state.blob_service_client, st.session_state.data, "Upload")
         st.session_state.is_deleted = False
 
     st.sidebar.text("")
