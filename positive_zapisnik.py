@@ -79,6 +79,7 @@ def load_data_from_azure(bsc):
         streamdownloader = blob_client.download_blob()
         df = pd.read_csv(StringIO(streamdownloader.readall().decode("utf-8")), usecols=["user", "chat", "ID", "assistant", "fajlovi"])
         
+
         df["fajlovi"] = df["fajlovi"].apply(ast.literal_eval)
         return df.dropna(how="all")               
     except FileNotFoundError:
@@ -113,7 +114,11 @@ def main():
 
     st.session_state.data = load_data_from_azure(st.session_state.blob_service_client)
 
-    st.session_state.data = st.session_state.data[st.session_state.data.ID != st.session_state.delete_thread_id]
+    try:
+        st.session_state.data = st.session_state.data[st.session_state.data.ID != st.session_state.delete_thread_id]
+    except:
+        pass
+    
     threads_dict = {thread.chat: thread.ID for thread in st.session_state.data.itertuples() if st.session_state.username == thread.user and ovaj_asistent == thread.assistant and thread.ID is not st.session_state.delete_thread_id}
 
     # Inicijalizacija session state-a
