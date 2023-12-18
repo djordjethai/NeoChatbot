@@ -1,78 +1,61 @@
 import openai
 import streamlit as st
 import os
-from os import getenv
+import pandas as pd
+import json
+
 from time import sleep
-from json import loads as json_loads
-from json import dumps as json_dumps
+from azure.storage.blob import BlobServiceClient
+# from pdfkit import configuration, from_string
+from myfunc.mojafunkcija import (
+    positive_login,
+    read_aad_username,
+    load_data_from_azure,
+    upload_data_to_azure,
+    inner_hybrid)
 
-from myfunc.mojafunkcija import positive_login
-
-import nltk     # ovo treba; kasnije ce se paketi importovati u funkcijama
+import nltk     # kasnije ce se paketi importovati u funkcijama
 
 st.set_page_config(page_title="Zapisnik", page_icon="🤖")
 
 version = "v1.1.1 Azure, username i upload file"
-getenv("OPENAI_API_KEY")
+os.getenv("OPENAI_API_KEY")
 client = openai
 assistant_id = "asst_289ViiMYpvV4UGn3mRHgOAr4"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
 client.beta.assistants.retrieve(assistant_id=assistant_id)
 
-_ = """
 # isprobati da li ovo radi kod Vas
 # from custom_theme import custom_streamlit_style
 
-importi za funkcije
-from langchain.prompts.chat import (
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate,
-    ChatPromptTemplate,
-    )
-# ne treba nam vise web search funkcija
-# from langchain.utilities import GoogleSerperAPIWrapper
-
-from os import environ
-import pinecone
-from pinecone_text.sparse import BM25Encoder
-from streamlit_javascript import st_javascript
-
-from io import StringIO
-import ast
-"""
-
-from azure.storage.blob import BlobServiceClient
-import pandas as pd
-
-import testmyfunc
-
-client = openai.OpenAI()
 ovaj_asistent = "zapisnik"
+
+
 global username
+
 
 def main():
     if "username" not in st.session_state:
         st.session_state.username = "positive"
-
-    username_dict = {
-    "Azure": testmyfunc.read_aad_username(),
-    "Windows": "lokal",
-    "Streamlit": username
-    }
-    st.session_state.username = username_dict.get(deployment_environment)
+    if deployment_environment == "Azure":    
+        st.session_state.username = read_aad_username()
+    elif deployment_environment == "Windows":
+        st.session_state.username = "lokal"
+    elif deployment_environment == "Streamlit":
+        st.session_state.username = username
     
     with st.sidebar:
-        st.info(f"Prijavljeni ste kao: {st.session_state.username}")
-
-
+        st.info(
+            f"Prijavljeni ste kao: {st.session_state.username}")
+        
+    client = openai.OpenAI()
     if "data" not in st.session_state:
         st.session_state.data = None
-    if "blob_service_client" not in st.session_state:   # i nakon ovoga ga vise ne diramo :)
+    if "blob_service_client" not in st.session_state:
         st.session_state.blob_service_client = BlobServiceClient.from_connection_string(os.environ.get("AZ_BLOB_API_KEY"))
     if "delete_thread_id" not in st.session_state:
         st.session_state.delete_thread_id = None
 
-
-    st.session_state.data = testmyfunc.azure_load_or_upload(st.session_state.blob_service_client, None, "Load")
+    st.session_state.data = load_data_from_azure(st.session_state.blob_service_client)
 
     try:
         st.session_state.data = st.session_state.data[st.session_state.data.ID != st.session_state.delete_thread_id]
@@ -89,7 +72,7 @@ def main():
         "thread_id": None,
         "is_deleted": False,
         "cancel_run": None,
-        "namespace": "zapisnik",
+        "namespace": "zapisnici",
         "columns": ["user", "chat", "ID", "assistant", "fajlovi"],
         }
     for key, value in default_session_states.items():
@@ -97,7 +80,9 @@ def main():
             st.session_state[key] = value
 
 
-    # HYBRID
+    def hybrid_search_process(upit: str) -> str:
+        stringic = inner_hybrid(upit)
+        return stringic
 
     # krecemo polako i sa definisanjem UI-a
    
@@ -123,7 +108,10 @@ def main():
     st.sidebar.text("")
 
     # funkcije za scrape-ovanje i upload-ovanje dokumenata
-    # UPLOAD TO OPENAI
+    def upload_to_openai(filepath):
+        with open(filepath, "rb") as f:
+            response = openai.files.create(file=f.read(), purpose="assistants")
+        return response.id
     
     uploaded_file = st.sidebar.file_uploader(label="Upload fajla u OpenAI embeding", key="uploadedfile")
     if st.sidebar.button(label="Upload File", key="uploadfile"):
@@ -131,7 +119,7 @@ def main():
             with open(file=f"{uploaded_file.name}", mode="wb") as f:
                 f.write(uploaded_file.getbuffer())
             st.session_state.file_id_list.append(
-                testmyfunc.upload_to_openai(filepath=f"{uploaded_file.name}"))
+                upload_to_openai(filepath=f"{uploaded_file.name}"))
             try:
                 st.session_state.data = st.session_state.data.drop(st.session_state.data.columns[[5, 6]], axis=1)
             except:
@@ -139,9 +127,7 @@ def main():
 
             st.session_state.data.loc[st.session_state.data["ID"] == st.session_state.thread_id, 
                                       "fajlovi"].apply(lambda g: g.append(st.session_state.file_id_list[-1]) or g)
-            
-            testmyfunc.azure_load_or_upload(st.session_state.blob_service_client, st.session_state.data, "Upload")
-
+            upload_data_to_azure(st.session_state.data)
             client.beta.assistants.files.create(assistant_id="asst_289ViiMYpvV4UGn3mRHgOAr4", file_id=st.session_state.file_id_list[-1])
             
         except Exception as e:
@@ -156,7 +142,7 @@ def main():
         new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent, "[]"]).T
         new_row.columns = st.session_state.data.columns
 
-        testmyfunc.azure_load_or_upload(st.session_state.blob_service_client, pd.concat([st.session_state.data, new_row]), "Upload")
+        upload_data_to_azure(pd.concat([st.session_state.data, new_row]))
         st.rerun()
     
     chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(threads_dict.keys()))
@@ -182,7 +168,7 @@ def main():
         st.rerun()
 
     if st.session_state.is_deleted:
-        testmyfunc.azure_load_or_upload(st.session_state.blob_service_client, st.session_state.data, "Upload")
+        upload_data_to_azure(st.session_state.data)
         st.session_state.is_deleted = False
 
     st.sidebar.text("")
@@ -227,14 +213,14 @@ def main():
 
                 for tool_call in run_status.required_action.submit_tool_outputs.tool_calls:
                     if tool_call.function.name == "web_search_process":
-                        arguments = json_loads(tool_call.function.arguments)
-                        tool_output = {"tool_call_id":tool_call.id, "output": json_dumps(output)}
+                        arguments = json.loads(tool_call.function.arguments)
+                        tool_output = {"tool_call_id":tool_call.id, "output": json.dumps(output)}
                         tools_outputs.append(tool_output)
 
                     elif tool_call.function.name == "hybrid_search_process":
-                        arguments = json_loads(tool_call.function.arguments)
+                        arguments = json.loads(tool_call.function.arguments)
                         output = hybrid_search_process(arguments["upit"])
-                        tool_output = {"tool_call_id":tool_call.id, "output": json_dumps(output)}
+                        tool_output = {"tool_call_id":tool_call.id, "output": json.dumps(output)}
                         tools_outputs.append(tool_output)
 
                 if run_status.required_action.type == 'submit_tool_outputs':
