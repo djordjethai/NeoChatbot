@@ -159,7 +159,7 @@ def main():
         files_for_deletion = st.session_state.data.loc[st.session_state.data["ID"] == thread.id, "fajlovi"].values[0]
         for file_id in files_for_deletion:
             client.beta.assistants.files.delete(
-                assistant_id="asst_289ViiMYpvV4UGn3mRHgOAr4",
+                assistant_id=assistant_id,
                 file_id=file_id,
             )
 
