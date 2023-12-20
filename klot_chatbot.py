@@ -8,7 +8,7 @@ from myfunc.mojafunkcija import inner_hybrid
 import nltk     # kasnije ce se paketi importovati u funkcijama
 from langchain.utilities import GoogleSerperAPIWrapper
 from streamlit_extras.stylable_container import stylable_container
-
+from st_copy_to_clipboard import st_copy_to_clipboard
 import pyperclip
 
 
@@ -144,8 +144,8 @@ def main():
             else:
                 st.markdown(f"<div style='background-color:lightgray; padding:10px; margin:5px; border-radius:5px;'><span style='color:red'>🤖 {role.capitalize()}:</span> {content}</div>", unsafe_allow_html=True)
                 
-                st.button("📋", on_click=on_copy_click, args=([content]), key=count)
-               
+                #st.button("📋", on_click=on_copy_click, args=([content]), key=count)
+                st_copy_to_clipboard(content)
                 count += 1                        
     except:     
         pass
