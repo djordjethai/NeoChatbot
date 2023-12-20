@@ -9,6 +9,13 @@ import nltk     # kasnije ce se paketi importovati u funkcijama
 from langchain.utilities import GoogleSerperAPIWrapper
 from streamlit_extras.stylable_container import stylable_container
 
+import clipboard
+
+
+def on_copy_click(text):
+    # st.session_state.copied.append(text)
+    clipboard.copy(text)
+    
 
 st.set_page_config(page_title="Chatbot", page_icon="🤖")
 
@@ -21,7 +28,7 @@ client.beta.assistants.retrieve(assistant_id=assistant_id)
 
 
 def main():
-   
+    count = 0   
     # Inicijalizacija session state-a
     default_session_states = {
         "file_id_list": [],
@@ -127,6 +134,7 @@ def main():
                         sleep(0.3)
 
     try:
+        
         messages = client.beta.threads.messages.list(thread_id=st.session_state.thread_id) 
         for msg in reversed(messages.data): 
             role = msg.role
@@ -135,10 +143,17 @@ def main():
                 st.markdown(f"<div style='background-color:lightblue; padding:10px; margin:5px; border-radius:5px;'><span style='color:blue'>👤 {role.capitalize()}:</span> {content}</div>", unsafe_allow_html=True)
             else:
                 st.markdown(f"<div style='background-color:lightgray; padding:10px; margin:5px; border-radius:5px;'><span style='color:red'>🤖 {role.capitalize()}:</span> {content}</div>", unsafe_allow_html=True)
-    except:
+                
+                st.button("📋", on_click=on_copy_click, args=([content]), key=count)
+               
+                count += 1                        
+    except:     
         pass
     
+    
 
+    
+    
 if __name__ == "__main__":
     main()
 
