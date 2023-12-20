@@ -9,12 +9,12 @@ import nltk     # kasnije ce se paketi importovati u funkcijama
 from langchain.utilities import GoogleSerperAPIWrapper
 from streamlit_extras.stylable_container import stylable_container
 
-import clipboard
+import pyperclip
 
 
 def on_copy_click(text):
     # st.session_state.copied.append(text)
-    clipboard.copy(text)
+    pyperclip.copy(text)
     
 
 st.set_page_config(page_title="Chatbot", page_icon="🤖")
