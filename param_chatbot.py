@@ -27,8 +27,8 @@ version = "v1.0.0 web"
 os.getenv("OPENAI_API_KEY")
 assistant_id = os.getenv("ASSISTANT_ID")
 namespace = os.getenv("NAMESPACE")
-ovaj_asistent = os.getenv("OVAJ_ASISTENT")
-uputstvo = os.getenv("UPUTSTVO")
+#ovaj_asistent = os.getenv("OVAJ_ASISTENT")
+#uputstvo = os.getenv("UPUTSTVO")
 
 client = openai.OpenAI()
 # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
