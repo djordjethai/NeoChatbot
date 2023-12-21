@@ -12,8 +12,18 @@ from st_copy_to_clipboard import st_copy_to_clipboard
 
 st.set_page_config(page_title="Chatbot", page_icon="🤖")
 
-version = "v1.0.0 Samo chatbot za website"
-st.caption(f"Ver. {version}")
+# skriva top menu bar (tri tacke). isti efekat se postize u fazi deploymenta na web sajt kada treba koristiti /?embed=true
+#
+# st.markdown('''
+# <style>
+# .stApp [data-testid="stToolbar"]{
+#     display:none;
+# }
+# </style>
+# ''', unsafe_allow_html=True)
+
+version = "v1.0.0 web"
+
 os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI()
 assistant_id = "asst_cLf9awhvTT1zxY23K3ebpXbs"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
@@ -21,7 +31,7 @@ client.beta.assistants.retrieve(assistant_id=assistant_id)
 
 
 def main():
-    count = 0   
+      
     # Inicijalizacija session state-a
     default_session_states = {
         "file_id_list": [],
@@ -65,7 +75,7 @@ def main():
     
 
     # pitalica
-    if prompt := st.chat_input(placeholder="Postavite pitanje"):
+    if prompt := st.chat_input(placeholder=f"Postavite pitanje                                ({version})"):
         if st.session_state.thread_id is not None:
             client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
 
@@ -75,7 +85,7 @@ def main():
             st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
 
 
-    # ako se poziva neka funkcija
+    # fixirana poruka za spinner
     with stylable_container(
                     key="bottom_content",
                     css_styles="""
@@ -85,7 +95,7 @@ def main():
                         }
                         """,
                     ):
-                
+        # obrada upita        
         with st.spinner("🤖 Chatbot razmislja..."):
             if run is not None:
                 while True:
@@ -95,7 +105,7 @@ def main():
 
                     if run_status.status == 'completed':
                         break
-
+                    # ako se poziva neka funkcija
                     elif run_status.status == 'requires_action':
                         tools_outputs = []
 
@@ -125,53 +135,24 @@ def main():
                             client.beta.threads.runs.submit_tool_outputs(thread_id=st.session_state.thread_id, run_id=run.id, tool_outputs=tools_outputs)
 
                         sleep(0.3)
-
     try:
-        
+        # kreiranje ispisa pitanja/odgovora     
         messages = client.beta.threads.messages.list(thread_id=st.session_state.thread_id) 
         for msg in reversed(messages.data): 
             role = msg.role
             content = msg.content[0].text.value 
+            messages = client.beta.threads.messages.list(thread_id=st.session_state.thread_id) 
+            
             if role == 'user':
                 st.markdown(f"<div style='background-color:lightblue; padding:10px; margin:5px; border-radius:5px;'><span style='color:blue'>👤 {role.capitalize()}:</span> {content}</div>", unsafe_allow_html=True)
             else:
                 st.markdown(f"<div style='background-color:lightgray; padding:10px; margin:5px; border-radius:5px;'><span style='color:red'>🤖 {role.capitalize()}:</span> {content}</div>", unsafe_allow_html=True)
-                
-                #st.button("📋", on_click=on_copy_click, args=([content]), key=count)
+                # copy to clipboard dugme (za svaki odgovor)
                 st_copy_to_clipboard(content)
-                count += 1                        
-    except:     
+        
+    except:
         pass
-    
-    
-
     
     
 if __name__ == "__main__":
     main()
-
-
-# # Display sources
-#     for thread_message in st.session_state.messages.data:
-#         for message_content in thread_message.content:
-#             # Access the actual text content
-#             message_content = message_content.text
-#             annotations = message_content.annotations
-#             citations = []
-            
-#             # Iterate over the annotations and add footnotes
-#             for index, annotation in enumerate(annotations):
-#                 # Replace the text with a footnote
-#                 message_content.value = message_content.value.replace(annotation.text, f' [{index}]')
-            
-#                 # Gather citations based on annotation attributes
-#                 if (file_citation := getattr(annotation, 'file_citation', None)):
-#                     cited_file = client.files.retrieve(file_citation.file_id)
-#                     citations.append(f'[{index}] {file_citation.quote} from {cited_file.filename}')
-#                 elif (file_path := getattr(annotation, 'file_path', None)):
-#                     cited_file = client.files.retrieve(file_path.file_id)
-#                     citations.append(f'[{index}] Click <here> to download {cited_file.filename}')
-#                     # Note: File download functionality not implemented above for brevity
-
-#             # Add footnotes to the end of the message before displaying to user
-#             message_content.value += '\n' + '\n'.join(citations)
