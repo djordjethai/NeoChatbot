@@ -18,18 +18,25 @@ import nltk     # kasnije ce se paketi importovati u funkcijama
 from st_copy_to_clipboard import st_copy_to_clipboard
 from streamlit_extras.stylable_container import stylable_container
 
-st.set_page_config(page_title="Zapisnik", page_icon="🤖")
+st.set_page_config(page_title="Positive asistent", page_icon="🤖")
 
-version = "v1.1.1 Azure, username i upload file"
+version = "v1.1.2 Parametri"
+
 os.getenv("OPENAI_API_KEY")
-client = openai
-assistant_id = "asst_289ViiMYpvV4UGn3mRHgOAr4"  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
+assistant_id = os.getenv("ASSISTANT_ID")
+namespace = os.getenv("NAMESPACE")
+ovaj_asistent = os.getenv("OVAJ_ASISTENT")
+uputstvo = os.getenv("UPUTSTVO")
+
+
+client = openai.OpenAI()
+assistant_id = assistant_id  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
 client.beta.assistants.retrieve(assistant_id=assistant_id)
 
 # isprobati da li ovo radi kod Vas
 # from custom_theme import custom_streamlit_style
 
-ovaj_asistent = "zapisnik"
+#ovaj_asistent = ovaj_asistent
 
 
 global username
@@ -74,7 +81,7 @@ def main():
         "thread_id": None,
         "is_deleted": False,
         "cancel_run": None,
-        "namespace": "zapisnici",
+        "namespace": namespace,
         "columns": ["user", "chat", "ID", "assistant", "fajlovi"],
         }
     for key, value in default_session_states.items():
@@ -89,12 +96,12 @@ def main():
     # krecemo polako i sa definisanjem UI-a
    
     # st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
-    st.sidebar.header(body="Zapisnik asistent")
+    st.sidebar.header(body=f"{ovaj_asistent} asistent")
     st.sidebar.caption(f"Ver. {version}")
     
     with st.sidebar.expander(label="Kako koristiti?", expanded= False):
-        st.write(""" 
-1. Aplikacija vam omogucava da razgovarate o pitanjima vezanim za interna dokumenta, pravilnike i sl. Pomenite sistematizaciju ili pravilnik. 
+        st.write(f""" 
+1. Aplikacija vam omogucava da razgovarate o pitanjima vezanim za {uputstvo} 
 
 2. Pamti razgovore koje ste imali do sada i mozete ih nastaviti po zelji. Odaberite iz padajuceg menija raniji razgovor i odaberite select
 
@@ -130,7 +137,7 @@ def main():
             st.session_state.data.loc[st.session_state.data["ID"] == st.session_state.thread_id, 
                                       "fajlovi"].apply(lambda g: g.append(st.session_state.file_id_list[-1]) or g)
             upload_data_to_azure(st.session_state.data)
-            client.beta.assistants.files.create(assistant_id="asst_289ViiMYpvV4UGn3mRHgOAr4", file_id=st.session_state.file_id_list[-1])
+            client.beta.assistants.files.create(assistant_id=assistant_id, file_id=st.session_state.file_id_list[-1])
             
         except Exception as e:
             st.warning("Opis greške:\n\n" + str(e))
@@ -178,8 +185,8 @@ def main():
     if st.session_state.thread_id:
         thread = client.beta.threads.retrieve(thread_id=st.session_state.thread_id)
 
-    instructions = "Please remember to always check each time for every new question if a tool is relevant to your query. \
-    Answer only in the Serbian language."
+    #instructions = "Please remember to always check each time for every new question if a tool is relevant to your query. \
+    #Answer only in the Serbian language."
 
     # ako se desi error run ce po default-u trajati 10 min pre no sto se prekine -- ovo je da ne moramo da cekamo
     try:
@@ -194,8 +201,8 @@ def main():
         if st.session_state.thread_id is not None:
             client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
 
-            run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id, 
-                                                instructions=instructions)
+            run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id)
+            
         else:
             st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
 
@@ -210,7 +217,7 @@ def main():
                     ):
         # obrada upita        
         with st.spinner("🤖 Chatbot razmislja..."):
-            # ako se poziva neka funkcija
+    # ako se poziva neka funkcija
             if run is not None:
                 while True:
             

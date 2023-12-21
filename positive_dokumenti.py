@@ -240,19 +240,19 @@ def main():
 
                         sleep(0.3)
 
-            try:
-                messages = client.beta.threads.messages.list(thread_id=st.session_state.thread_id) 
-                for msg in reversed(messages.data): 
-                    role = msg.role
-                    content = msg.content[0].text.value 
-                    if role == 'user':
-                        st.markdown(f"<div style='background-color:lightblue; padding:10px; margin:5px; border-radius:5px;'><span style='color:blue'>👤 {role.capitalize()}:</span> {content}</div>", unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"<div style='background-color:lightgray; padding:10px; margin:5px; border-radius:5px;'><span style='color:red'>🤖 {role.capitalize()}:</span> {content}</div>", unsafe_allow_html=True)
-                        # copy to clipboard dugme (za svaki odgovor)
-                        st_copy_to_clipboard(content)
-            except:
-                pass
+    try:
+        messages = client.beta.threads.messages.list(thread_id=st.session_state.thread_id) 
+        for msg in reversed(messages.data): 
+            role = msg.role
+            content = msg.content[0].text.value 
+            if role == 'user':
+                st.markdown(f"<div style='background-color:lightblue; padding:10px; margin:5px; border-radius:5px;'><span style='color:blue'>👤 {role.capitalize()}:</span> {content}</div>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<div style='background-color:lightgray; padding:10px; margin:5px; border-radius:5px;'><span style='color:red'>🤖 {role.capitalize()}:</span> {content}</div>", unsafe_allow_html=True)
+                # copy to clipboard dugme (za svaki odgovor)
+                st_copy_to_clipboard(content)
+    except:
+        pass
 
 # Deployment on Stremalit Login functionality
 deployment_environment = os.environ.get("DEPLOYMENT_ENVIRONMENT")
