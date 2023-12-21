@@ -231,12 +231,8 @@ def main():
                         tools_outputs = []
 
                         for tool_call in run_status.required_action.submit_tool_outputs.tool_calls:
-                            if tool_call.function.name == "web_search_process":
-                                arguments = json.loads(tool_call.function.arguments)
-                                tool_output = {"tool_call_id":tool_call.id, "output": json.dumps(output)}
-                                tools_outputs.append(tool_output)
-
-                            elif tool_call.function.name == "hybrid_search_process":
+                            
+                            if tool_call.function.name == "hybrid_search_process":
                                 arguments = json.loads(tool_call.function.arguments)
                                 output = hybrid_search_process(arguments["upit"])
                                 tool_output = {"tool_call_id":tool_call.id, "output": json.dumps(output)}
