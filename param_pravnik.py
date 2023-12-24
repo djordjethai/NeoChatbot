@@ -7,20 +7,19 @@ import json
 from time import sleep
 from azure.storage.blob import BlobServiceClient
 # from pdfkit import configuration, from_string
-from myfunc.mojafunkcija import (
-    positive_login,
+from myfunc.mojafunkcija import positive_login
+from myfunc.asistenti import (
     read_aad_username,
     load_data_from_azure,
     upload_data_to_azure,
-    inner_hybrid)
-
+    HybridQueryProcessor)
 import nltk     # kasnije ce se paketi importovati u funkcijama
 from st_copy_to_clipboard import st_copy_to_clipboard
 from streamlit_extras.stylable_container import stylable_container
 
 st.set_page_config(page_title="Positive asistent", page_icon="🤖")
 
-version = "v1.1.2 Parametri"
+version = "v1.1.3 asistenti lib"
 
 os.getenv("OPENAI_API_KEY")
 assistant_id = os.getenv("ASSISTANT_ID")
@@ -90,7 +89,8 @@ def main():
 
 
     def hybrid_search_process(upit: str) -> str:
-        stringic = inner_hybrid(upit)
+        processor = HybridQueryProcessor()
+        stringic = processor.hybrid_query(upit)
         return stringic
 
     # krecemo polako i sa definisanjem UI-a

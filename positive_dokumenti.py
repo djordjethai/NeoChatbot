@@ -74,7 +74,7 @@ def main():
         "thread_id": None,
         "is_deleted": False,
         "cancel_run": None,
-        "namespace": "bis",
+        "namespace": "positive",
         "columns": ["user", "chat", "ID", "assistant", "fajlovi"],
         }
     for key, value in default_session_states.items():

@@ -3,7 +3,7 @@ import streamlit as st
 import os
 import json
 from time import sleep
-from myfunc.mojafunkcija import inner_hybrid
+from myfunc.asistenti import HybridQueryProcessor
 
 import nltk     # kasnije ce se paketi importovati u funkcijama
 from langchain.utilities import GoogleSerperAPIWrapper
@@ -22,7 +22,7 @@ st.set_page_config(page_title="Positive Chatbot", page_icon="🤖")
 # </style>
 # ''', unsafe_allow_html=True)
 
-version = "v1.0.0 web"
+version = "v1.0.1 asistenti lib"
 
 os.getenv("OPENAI_API_KEY")
 assistant_id = os.getenv("ASSISTANT_ID")
@@ -58,7 +58,8 @@ def main():
 
 
     def hybrid_search_process(upit: str) -> str:
-        stringic = inner_hybrid(upit)
+        processor = HybridQueryProcessor()
+        stringic = processor.hybrid_query(upit)
         return stringic
         
     
