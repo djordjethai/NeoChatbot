@@ -1,3 +1,4 @@
+from re import U
 import openai
 import streamlit as st
 import os
@@ -80,7 +81,6 @@ def main():
         "thread_id": None,
         "is_deleted": False,
         "cancel_run": None,
-        "namespace": namespace,
         "columns": ["user", "chat", "ID", "assistant", "fajlovi"],
         }
     for key, value in default_session_states.items():
@@ -90,7 +90,7 @@ def main():
 
     def hybrid_search_process(upit: str) -> str:
         processor = HybridQueryProcessor()
-        stringic = processor.hybrid_query(upit)
+        stringic = processor.process_query_results(upit)
         return stringic
 
     # krecemo polako i sa definisanjem UI-a
