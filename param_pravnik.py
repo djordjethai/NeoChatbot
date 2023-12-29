@@ -4,7 +4,7 @@ import streamlit as st
 import os
 import pandas as pd
 import json
-
+from langchain.utilities import GoogleSerperAPIWrapper
 from time import sleep
 from azure.storage.blob import BlobServiceClient
 # from pdfkit import configuration, from_string
@@ -13,10 +13,13 @@ from myfunc.asistenti import (
     read_aad_username,
     load_data_from_azure,
     upload_data_to_azure,
-    HybridQueryProcessor)
+    hybrid_search_process,
+    sql_search_tool,
+    web_serach_process)
 import nltk     # kasnije ce se paketi importovati u funkcijama
 from st_copy_to_clipboard import st_copy_to_clipboard
 from streamlit_extras.stylable_container import stylable_container
+
 
 st.set_page_config(page_title="Positive asistent", page_icon="🤖")
 
@@ -27,6 +30,9 @@ assistant_id = os.getenv("ASSISTANT_ID")
 namespace = os.getenv("NAMESPACE")
 ovaj_asistent = os.getenv("OVAJ_ASISTENT")
 uputstvo = os.getenv("UPUTSTVO")
+# assistant_id = "asst_1YAl3U9XJTOnfYUJrStFO1nH"
+# namespace = "pravnik"
+# ovaj_asistent = "pravnik"
 
 
 client = openai.OpenAI()
@@ -88,12 +94,7 @@ def main():
             st.session_state[key] = value
 
 
-    def hybrid_search_process(upit: str) -> str:
-        processor = HybridQueryProcessor()
-        stringic = processor.process_query_results(upit)
-        return stringic
-
-    # krecemo polako i sa definisanjem UI-a
+   
    
     # st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
     st.sidebar.header(body=f"{ovaj_asistent} asistent")
@@ -237,7 +238,21 @@ def main():
                                 output = hybrid_search_process(arguments["upit"])
                                 tool_output = {"tool_call_id":tool_call.id, "output": json.dumps(output)}
                                 tools_outputs.append(tool_output)
+                            elif tool_call.function.name == "sql_search_tool":
+                                arguments = json.loads(tool_call.function.arguments)
+                                output = sql_search_tool(arguments["upit"])
+                                tool_output = {"tool_call_id":tool_call.id, "output": json.dumps(output)}
+                                tools_outputs.append(tool_output)
+                            elif tool_call.function.name == "web_search_process":
+                                arguments = json.loads(tool_call.function.arguments)
+                                try:
+                                    output = web_serach_process(arguments["query"])
+                                except:
+                                    output = web_serach_process(arguments["q"])
 
+                                tool_output = {"tool_call_id":tool_call.id, "output": json.dumps(output)}
+                                tools_outputs.append(tool_output)
+                                
                         if run_status.required_action.type == 'submit_tool_outputs':
                             client.beta.threads.runs.submit_tool_outputs(thread_id=st.session_state.thread_id, run_id=run.id, tool_outputs=tools_outputs)
 

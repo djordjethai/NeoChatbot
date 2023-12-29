@@ -3,7 +3,10 @@ import streamlit as st
 import os
 import json
 from time import sleep
-from myfunc.asistenti import HybridQueryProcessor
+from myfunc.asistenti import (
+    hybrid_search_process, 
+    sql_search_tool, 
+    web_serach_process )
 
 import nltk     # kasnije ce se paketi importovati u funkcijama
 from langchain.utilities import GoogleSerperAPIWrapper
@@ -51,17 +54,6 @@ def main():
         if key not in st.session_state:
             st.session_state[key] = value
 
-
-    def web_serach_process(q: str) -> str:
-        return GoogleSerperAPIWrapper(environment=os.environ["SERPER_API_KEY"]).run(q)
-
-
-    def hybrid_search_process(upit: str) -> str:
-        processor = HybridQueryProcessor()
-        stringic = processor.process_query_results(upit)
-        return stringic
-        
-    
     if st.session_state.thread_id is None:
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
@@ -130,7 +122,12 @@ def main():
                                 output = hybrid_search_process(arguments["upit"])
                                 tool_output = {"tool_call_id":tool_call.id, "output": json.dumps(output)}
                                 tools_outputs.append(tool_output)
-
+                            elif tool_call.function.name == "sql_search_tool":
+                                arguments = json.loads(tool_call.function.arguments)
+                                output = sql_search_tool(arguments["upit"])
+                                tool_output = {"tool_call_id":tool_call.id, "output": json.dumps(output)}
+                                tools_outputs.append(tool_output)
+                                
                         if run_status.required_action.type == 'submit_tool_outputs':
                             client.beta.threads.runs.submit_tool_outputs(thread_id=st.session_state.thread_id, run_id=run.id, tool_outputs=tools_outputs)
 
