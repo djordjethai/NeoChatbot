@@ -3,11 +3,7 @@ import streamlit as st
 import os
 import json
 from time import sleep
-from myfunc.asistenti import (
-    hybrid_search_process, 
-    sql_search_tool, 
-    web_serach_process )
-
+from myfunc.asistenti import HybridQueryProcessor, SQLSearchTool
 import nltk     # kasnije ce se paketi importovati u funkcijama
 from langchain.utilities import GoogleSerperAPIWrapper
 from streamlit_extras.stylable_container import stylable_container
@@ -29,14 +25,25 @@ version = "v1.0.1 asistenti lib"
 
 os.getenv("OPENAI_API_KEY")
 assistant_id = os.getenv("ASSISTANT_ID")
-namespace = os.getenv("NAMESPACE")
-#ovaj_asistent = os.getenv("OVAJ_ASISTENT")
-#uputstvo = os.getenv("UPUTSTVO")
 
 client = openai.OpenAI()
 # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
 client.beta.assistants.retrieve(assistant_id=assistant_id)
 
+# ovde se navode svi alati koji ce se koristiti u chatbotu
+# funkcije za obradu upita prebacene su iz myfunc zato da bi se lakse dodavali opcioni parametri u funkcije
+def hybrid_search_process(upit: str) -> str:
+        processor = HybridQueryProcessor()
+        stringic = processor.process_query_results(upit)
+        return stringic
+    
+def sql_search_tool(upit: str) -> str:
+    processor = SQLSearchTool()
+    stringic = processor.search(upit)
+    return stringic
+
+def web_serach_process(q: str) -> str:
+    return GoogleSerperAPIWrapper(environment=os.environ["SERPER_API_KEY"]).run(q)
 
 def main():
       

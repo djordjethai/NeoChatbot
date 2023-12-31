@@ -1,4 +1,3 @@
-from re import U
 import openai
 import streamlit as st
 import os
@@ -13,9 +12,10 @@ from myfunc.asistenti import (
     read_aad_username,
     load_data_from_azure,
     upload_data_to_azure,
-    hybrid_search_process,
-    sql_search_tool,
-    web_serach_process)
+    HybridQueryProcessor,
+    SQLSearchTool
+)
+    
 import nltk     # kasnije ce se paketi importovati u funkcijama
 from st_copy_to_clipboard import st_copy_to_clipboard
 from streamlit_extras.stylable_container import stylable_container
@@ -27,22 +27,29 @@ version = "v1.1.3 asistenti lib"
 
 os.getenv("OPENAI_API_KEY")
 assistant_id = os.getenv("ASSISTANT_ID")
-namespace = os.getenv("NAMESPACE")
 ovaj_asistent = os.getenv("OVAJ_ASISTENT")
 uputstvo = os.getenv("UPUTSTVO")
-# assistant_id = "asst_1YAl3U9XJTOnfYUJrStFO1nH"
-# namespace = "pravnik"
-# ovaj_asistent = "pravnik"
-
 
 client = openai.OpenAI()
 assistant_id = assistant_id  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
 client.beta.assistants.retrieve(assistant_id=assistant_id)
 
-# isprobati da li ovo radi kod Vas
-# from custom_theme import custom_streamlit_style
 
-#ovaj_asistent = ovaj_asistent
+# ovde se navode svi alati koji ce se koristiti u chatbotu
+# funkcije za obradu upita prebacene su iz myfunc zato da bi se lakse dodavali opcioni parametri u funkcije
+def hybrid_search_process(upit: str) -> str:
+        processor = HybridQueryProcessor()
+        stringic = processor.process_query_results(upit)
+        return stringic
+    
+def sql_search_tool(upit: str) -> str:
+    processor = SQLSearchTool()
+    stringic = processor.search(upit)
+    return stringic
+
+def web_serach_process(q: str) -> str:
+    return GoogleSerperAPIWrapper(environment=os.environ["SERPER_API_KEY"]).run(q)
+
 
 
 global username
@@ -94,9 +101,6 @@ def main():
             st.session_state[key] = value
 
 
-   
-   
-    # st.markdown(custom_streamlit_style, unsafe_allow_html=True)   # ne radi izgleda vise
     st.sidebar.header(body=f"{ovaj_asistent} asistent")
     st.sidebar.caption(f"Ver. {version}")
     
