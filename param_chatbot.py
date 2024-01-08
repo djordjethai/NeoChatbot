@@ -3,7 +3,7 @@ import streamlit as st
 import os
 import json
 from time import sleep
-from myfunc.asistenti import HybridQueryProcessor, SQLSearchTool
+from myfunc.retrievers import HybridQueryProcessor, SQLSearchTool
 import nltk     # kasnije ce se paketi importovati u funkcijama
 from langchain.utilities import GoogleSerperAPIWrapper
 from streamlit_extras.stylable_container import stylable_container

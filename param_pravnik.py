@@ -12,10 +12,8 @@ from myfunc.asistenti import (
     read_aad_username,
     load_data_from_azure,
     upload_data_to_azure,
-    HybridQueryProcessor,
-    SQLSearchTool
-)
-    
+    )
+from myfunc.retrievers import HybridQueryProcessor,SQLSearchTool
 import nltk     # kasnije ce se paketi importovati u funkcijama
 from st_copy_to_clipboard import st_copy_to_clipboard
 from streamlit_extras.stylable_container import stylable_container
@@ -38,7 +36,7 @@ client.beta.assistants.retrieve(assistant_id=assistant_id)
 # ovde se navode svi alati koji ce se koristiti u chatbotu
 # funkcije za obradu upita prebacene su iz myfunc zato da bi se lakse dodavali opcioni parametri u funkcije
 def hybrid_search_process(upit: str) -> str:
-        processor = HybridQueryProcessor()
+        processor = HybridQueryProcessor(namespace="qa_pairs")
         stringic = processor.process_query_results(upit)
         return stringic
     
