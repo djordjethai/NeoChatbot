@@ -3,7 +3,7 @@ import streamlit as st
 import os
 import pandas as pd
 import json
-from langchain.utilities import GoogleSerperAPIWrapper
+from langchain_community.utilities import GoogleSerperAPIWrapper
 from time import sleep
 from azure.storage.blob import BlobServiceClient
 # from pdfkit import configuration, from_string

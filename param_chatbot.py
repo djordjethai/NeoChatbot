@@ -5,7 +5,7 @@ import json
 from time import sleep
 from myfunc.retrievers import HybridQueryProcessor, SQLSearchTool
 import nltk     # kasnije ce se paketi importovati u funkcijama
-from langchain.utilities import GoogleSerperAPIWrapper
+from langchain_community.utilities import GoogleSerperAPIWrapper
 from streamlit_extras.stylable_container import stylable_container
 from st_copy_to_clipboard import st_copy_to_clipboard
 
