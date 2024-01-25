@@ -24,9 +24,9 @@ st.set_page_config(page_title="Positive asistent", page_icon="🤖")
 version = "v1.1.3 asistenti lib"
 
 os.getenv("OPENAI_API_KEY")
-assistant_id = os.getenv("ASSISTANT_ID")
-ovaj_asistent = os.getenv("OVAJ_ASISTENT")
-uputstvo = os.getenv("UPUTSTVO")
+assistant_id = "asst_1YAl3U9XJTOnfYUJrStFO1nH"
+ovaj_asistent = "pravnik"
+#uputstvo = os.getenv("UPUTSTVO")
 
 client = openai.OpenAI()
 assistant_id = assistant_id  # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
@@ -103,7 +103,7 @@ def main():
     st.sidebar.caption(f"Ver. {version}")
     
     with st.sidebar.expander(label="Kako koristiti?", expanded= False):
-        st.write(f""" 
+        st.write(""" 
 1. Aplikacija vam omogucava da razgovarate o pitanjima vezanim za {uputstvo} 
 
 2. Pamti razgovore koje ste imali do sada i mozete ih nastaviti po zelji. Odaberite iz padajuceg menija raniji razgovor i odaberite select
@@ -235,8 +235,12 @@ def main():
 
                         for tool_call in run_status.required_action.submit_tool_outputs.tool_calls:
                             
+                            print("Function Name:", tool_call.function.name)
+                            print("Raw Arguments:", tool_call.function.arguments)
+
                             if tool_call.function.name == "hybrid_search_process":
                                 arguments = json.loads(tool_call.function.arguments)
+                                print("Parsed Arguments:", arguments)
                                 output = hybrid_search_process(arguments["upit"])
                                 tool_output = {"tool_call_id":tool_call.id, "output": json.dumps(output)}
                                 tools_outputs.append(tool_output)
