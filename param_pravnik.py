@@ -36,7 +36,7 @@ client.beta.assistants.retrieve(assistant_id=assistant_id)
 # ovde se navode svi alati koji ce se koristiti u chatbotu
 # funkcije za obradu upita prebacene su iz myfunc zato da bi se lakse dodavali opcioni parametri u funkcije
 def hybrid_search_process(upit: str) -> str:
-        processor = HybridQueryProcessor(namespace="qa_pairs")
+        processor = HybridQueryProcessor()
         stringic = processor.process_query_results(upit)
         return stringic
     
