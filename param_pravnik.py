@@ -87,7 +87,7 @@ def main():
     # Inicijalizacija session state-a
     default_session_states = {
         "file_id_list": [],
-        "openai_model": "gpt-4-1106-preview",
+        "openai_model": "gpt-4-turbo-preview",
         "messages": [],
         "thread_id": None,
         "is_deleted": False,
