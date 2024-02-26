@@ -74,8 +74,10 @@ def main():
         st.session_state.blob_service_client = BlobServiceClient.from_connection_string(os.environ.get("AZ_BLOB_API_KEY"))
     if "delete_thread_id" not in st.session_state:
         st.session_state.delete_thread_id = None
+    if "azure_filename" not in st.session_state:
+        st.session_state.azure_filename = "positive_asistent.csv"
 
-    st.session_state.data = load_data_from_azure(st.session_state.blob_service_client)
+    st.session_state.data = load_data_from_azure(bsc=st.session_state.blob_service_client, filename=st.session_state.azure_filename)
 
     try:
         st.session_state.data = st.session_state.data[st.session_state.data.ID != st.session_state.delete_thread_id]
@@ -139,7 +141,7 @@ def main():
 
             st.session_state.data.loc[st.session_state.data["ID"] == st.session_state.thread_id, 
                                       "fajlovi"].apply(lambda g: g.append(st.session_state.file_id_list[-1]) or g)
-            upload_data_to_azure(st.session_state.data)
+            upload_data_to_azure(st.session_state.data, st.session_state.azure_filename)
             client.beta.assistants.files.create(assistant_id=assistant_id, file_id=st.session_state.file_id_list[-1])
             
         except Exception as e:
@@ -154,7 +156,7 @@ def main():
         new_row = pd.DataFrame([st.session_state.username, new_chat_name, st.session_state.thread_id, ovaj_asistent, "[]"]).T
         new_row.columns = st.session_state.data.columns
 
-        upload_data_to_azure(pd.concat([st.session_state.data, new_row]))
+        upload_data_to_azure(pd.concat([st.session_state.data, new_row]), st.session_state.azure_filename)
         st.rerun()
     
     chosen_chat = st.sidebar.selectbox(label="Izaberite chat", options=["Select..."] + list(threads_dict.keys()))
@@ -180,7 +182,7 @@ def main():
         st.rerun()
 
     if st.session_state.is_deleted:
-        upload_data_to_azure(st.session_state.data)
+        upload_data_to_azure(st.session_state.data, st.session_state.azure_filename)
         st.session_state.is_deleted = False
 
     st.sidebar.text("")
