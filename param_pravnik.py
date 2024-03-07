@@ -75,7 +75,7 @@ def main():
     if "delete_thread_id" not in st.session_state:
         st.session_state.delete_thread_id = None
     if "azure_filename" not in st.session_state:
-        st.session_state.azure_filename = "positive_asistent.csv"
+        st.session_state.azure_filename = "assistant_data.csv"
 
     st.session_state.data = load_data_from_azure(bsc=st.session_state.blob_service_client, filename=st.session_state.azure_filename)
 
