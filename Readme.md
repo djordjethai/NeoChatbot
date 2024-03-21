@@ -52,4 +52,3 @@ streamlit run your_script_name.py
 
 - Use the chatbot responsibly and follow ethical guidelines for AI usage.
 
-Feel free to explore and customize the code to suit your specific needs!
