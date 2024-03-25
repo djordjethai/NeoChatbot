@@ -24,7 +24,8 @@ st.set_page_config(page_title="Positive asistent", page_icon="🤖")
 version = "v1.1.3 asistenti lib"
 
 os.getenv("OPENAI_API_KEY")
-assistant_id = "asst_1YAl3U9XJTOnfYUJrStFO1nH"
+# asst_1YAl3U9XJTOnfYUJrStFO1nH -- ubaciti
+assistant_id = os.getenv("ASSISTANT_ID")
 ovaj_asistent = "pravnik"
 #uputstvo = os.getenv("UPUTSTVO")
 
@@ -47,8 +48,6 @@ def sql_search_tool(upit: str) -> str:
 
 def web_serach_process(q: str) -> str:
     return GoogleSerperAPIWrapper(environment=os.environ["SERPER_API_KEY"]).run(q)
-
-
 
 global username
 
