@@ -4,19 +4,48 @@ import openai
 import os
 import streamlit as st
 
+from openai import AssistantEventHandler
 from st_copy_to_clipboard import st_copy_to_clipboard
 from streamlit_extras.stylable_container import stylable_container
 from time import sleep
+from typing_extensions import override
 
 from myfunc.retrievers import HybridQueryProcessor, SQLSearchTool
 from myfunc.various_tools import web_search_process
+ 
+# First, we create a EventHandler class to define
+# how we want to handle the events in the response stream.
+ 
+class EventHandler(AssistantEventHandler):    
+  @override
+  def on_text_created(self, text) -> None:
+    print(f"\nassistant > ", end="", flush=True)
+      
+  @override
+  def on_text_delta(self, delta, snapshot):
+    print(delta.value, end="", flush=True)
+      
+  def on_tool_call_created(self, tool_call):
+    print(f"\nassistant > {tool_call.type}\n", flush=True)
+  
+  def on_tool_call_delta(self, delta, snapshot):
+    if delta.type == 'code_interpreter':
+      if delta.code_interpreter.input:
+        print(delta.code_interpreter.input, end="", flush=True)
+      if delta.code_interpreter.outputs:
+        print(f"\n\noutput >", flush=True)
+        for output in delta.code_interpreter.outputs:
+          if output.type == "logs":
+            print(f"\n{output.logs}", flush=True)
 
-st.set_page_config(page_title="Positive Chatbot", page_icon="🤖")
+
+# st.set_page_config(page_title="Positive Chatbot", page_icon="🤖")
 
 version = "v1.0.1 asistenti lib"
 
 os.getenv("OPENAI_API_KEY")
-assistant_id = os.getenv("ASSISTANT_ID")
+assistant_id = "asst_1YAl3U9XJTOnfYUJrStFO1nH"
+# assistant_id = os.getenv("ASSISTANT_ID")
 
 client = openai.OpenAI()
 # printuje se u drugoj skripti, a moze jelte da se vidi i na OpenAI Playground-u
@@ -72,8 +101,15 @@ def main():
         if st.session_state.thread_id is not None:
             client.beta.threads.messages.create(thread_id=st.session_state.thread_id, role="user", content=prompt) 
 
-            run = client.beta.threads.runs.create(thread_id=st.session_state.thread_id, assistant_id=assistant.id)
-                                                
+            # run = client.beta.threads.runs.create_and_stream(thread_id=st.session_state.thread_id, assistant_id=assistant.id)
+            with client.beta.threads.runs.create_and_stream(
+                thread_id=thread.id,
+                assistant_id=assistant.id,
+                instructions="You are a helpful assistant",
+                event_handler=EventHandler(),
+                ) as stream:
+                stream.until_done()
+
         else:
             st.warning("Molimo Vas da izaberete postojeci ili da kreirate novi chat.")
 
