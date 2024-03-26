@@ -1,25 +1,17 @@
-import openai
-import streamlit as st
-import os
 import json
-from time import sleep
-from myfunc.retrievers import HybridQueryProcessor, SQLSearchTool
 import nltk     # kasnije ce se paketi importovati u funkcijama
-from langchain_community.utilities import GoogleSerperAPIWrapper
-from streamlit_extras.stylable_container import stylable_container
+import openai
+import os
+import streamlit as st
+
 from st_copy_to_clipboard import st_copy_to_clipboard
+from streamlit_extras.stylable_container import stylable_container
+from time import sleep
+
+from myfunc.retrievers import HybridQueryProcessor, SQLSearchTool
+from myfunc.various_tools import web_search_process
 
 st.set_page_config(page_title="Positive Chatbot", page_icon="🤖")
-
-# skriva top menu bar (tri tacke). isti efekat se postize u fazi deploymenta na web sajt kada treba koristiti /?embed=true
-#
-# st.markdown('''
-# <style>
-# .stApp [data-testid="stToolbar"]{
-#     display:none;
-# }
-# </style>
-# ''', unsafe_allow_html=True)
 
 version = "v1.0.1 asistenti lib"
 
@@ -42,11 +34,8 @@ def sql_search_tool(upit: str) -> str:
     stringic = processor.search(upit)
     return stringic
 
-def web_serach_process(q: str) -> str:
-    return GoogleSerperAPIWrapper(environment=os.environ["SERPER_API_KEY"]).run(q)
 
-def main():
-      
+def main(): 
     # Inicijalizacija session state-a
     default_session_states = {
         "file_id_list": [],
@@ -117,9 +106,9 @@ def main():
                             if tool_call.function.name == "web_search_process":
                                 arguments = json.loads(tool_call.function.arguments)
                                 try:
-                                    output = web_serach_process(arguments["query"])
+                                    output = web_search_process(arguments["query"])
                                 except:
-                                    output = web_serach_process(arguments["q"])
+                                    output = web_search_process(arguments["q"])
 
                                 tool_output = {"tool_call_id":tool_call.id, "output": json.dumps(output)}
                                 tools_outputs.append(tool_output)

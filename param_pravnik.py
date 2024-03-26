@@ -1,22 +1,20 @@
+import json
+import nltk     # kasnije ce se paketi importovati u funkcijama
 import openai
-import streamlit as st
 import os
 import pandas as pd
-import json
-from langchain_community.utilities import GoogleSerperAPIWrapper
-from time import sleep
+import streamlit as st
+
 from azure.storage.blob import BlobServiceClient
-# from pdfkit import configuration, from_string
-from myfunc.mojafunkcija import positive_login
-from myfunc.asistenti import (
-    read_aad_username,
-    load_data_from_azure,
-    upload_data_to_azure,
-    )
-from myfunc.retrievers import HybridQueryProcessor,SQLSearchTool
-import nltk     # kasnije ce se paketi importovati u funkcijama
 from st_copy_to_clipboard import st_copy_to_clipboard
 from streamlit_extras.stylable_container import stylable_container
+from time import sleep
+
+from langchain_community.utilities import GoogleSerperAPIWrapper
+
+from myfunc.asistenti import load_data_from_azure, read_aad_username, upload_data_to_azure
+from myfunc.mojafunkcija import positive_login
+from myfunc.retrievers import HybridQueryProcessor, SQLSearchTool
 
 
 st.set_page_config(page_title="Positive asistent", page_icon="🤖")
