@@ -14,10 +14,8 @@ from langchain_community.utilities import GoogleSerperAPIWrapper
 
 from myfunc.asistenti import load_data_from_azure, read_aad_username, upload_data_to_azure
 from myfunc.mojafunkcija import positive_login
-from myfunc.retrievers import HybridQueryProcessor, SQLSearchTool
-
-
-st.set_page_config(page_title="Positive asistent", page_icon="🤖")
+from myfunc.prompts import SQLSearchTool
+from myfunc.retrievers import HybridQueryProcessor
 
 version = "v1.1.3 asistenti lib"
 

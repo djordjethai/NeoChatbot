@@ -10,7 +10,8 @@ from streamlit_extras.stylable_container import stylable_container
 from time import sleep
 from typing_extensions import override
 
-from myfunc.retrievers import HybridQueryProcessor, SQLSearchTool
+from myfunc.prompts import SQLSearchTool
+from myfunc.retrievers import HybridQueryProcessor
 from myfunc.various_tools import web_search_process
  
 # First, we create a EventHandler class to define
